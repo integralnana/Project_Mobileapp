@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:projectapp/screen/person.dart';
 import 'package:projectapp/screen/register.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -129,10 +130,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   email: email,
                                   password: password,
                                 );
-                                // Navigate to the home screen or another screen upon successful login
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PersonScreen()),
+                                );
                               } on FirebaseAuthException catch (e) {
                                 print(e.message);
-                                // Handle login error
                               }
                             }
                           },
@@ -150,9 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         TextButton(
-                          onPressed: () {
-                            // Implement forgot password functionality
-                          },
+                          onPressed: () {},
                           child: const Text(
                             'ลืมรหัสผ่าน',
                             style: TextStyle(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/screen/login.dart';
+import 'package:projectapp/screen/person.dart';
 import 'package:projectapp/screen/register.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -46,6 +47,21 @@ class HomeScreen extends StatelessWidget {
                     },
                     icon: Icon(Icons.login),
                     label: Text("ล็อกอิน", style: GoogleFonts.anuphan()),
+                  ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) {
+                          return PersonScreen();
+                        }),
+                      );
+                    },
+                    icon: Icon(Icons.add),
+                    label: Text("ประเทภบุคคล", style: GoogleFonts.anuphan()),
                   ),
                 ),
               ],
