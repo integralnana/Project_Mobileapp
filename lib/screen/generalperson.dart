@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-class StudentScreen extends StatefulWidget {
-  const StudentScreen({super.key});
+class GeneralPersonScreen extends StatefulWidget {
+  const GeneralPersonScreen({super.key});
 
   @override
-  _StudentScreenState createState() => _StudentScreenState();
+  _GeneralPersonScreenState createState() => _GeneralPersonScreenState();
 }
 
-class _StudentScreenState extends State<StudentScreen> {
+class _GeneralPersonScreenState extends State<GeneralPersonScreen> {
   File? _image;
 
   Future<void> _pickImage() async {
@@ -28,7 +28,7 @@ class _StudentScreenState extends State<StudentScreen> {
     return Scaffold(
       backgroundColor: Colors.pink[100],
       appBar: AppBar(
-        title: const Text('นักศึกษา'),
+        title: const Text('บุคคลทั่วไป'),
         backgroundColor: Colors.orangeAccent,
       ),
       body: Padding(
@@ -74,7 +74,7 @@ class _StudentScreenState extends State<StudentScreen> {
             const SizedBox(height: 20),
             TextField(
               decoration: InputDecoration(
-                labelText: 'รหัสนักศึกษา',
+                labelText: 'อายุ',
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -86,7 +86,7 @@ class _StudentScreenState extends State<StudentScreen> {
             const SizedBox(height: 20),
             TextField(
               decoration: InputDecoration(
-                labelText: 'Username',
+                labelText: 'ที่อยู่',
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(

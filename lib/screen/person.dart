@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projectapp/screen/generalperson.dart';
 import 'package:projectapp/screen/student.dart';
 
 void main() {
@@ -116,22 +117,6 @@ class PersonScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class GeneralPersonScreen extends StatelessWidget {
-  const GeneralPersonScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('General Person Screen'),
-      ),
-      body: const Center(
-        child: Text('This is the general person screen'),
       ),
     );
   }
