@@ -5,6 +5,7 @@ import 'package:projectapp/screen/login.dart';
 import 'package:projectapp/screen/person.dart';
 import 'package:projectapp/screen/profile.dart';
 import 'package:projectapp/screen/register.dart';
+import 'package:projectapp/screen/sharing_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -112,9 +113,7 @@ class HomeScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('ออกจากระบบ'),
-              onTap: () {
-                // Handle logout tap
-              },
+              onTap: () {},
             ),
           ],
         ),
@@ -134,7 +133,12 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SharingScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   minimumSize: const Size(200, 50),

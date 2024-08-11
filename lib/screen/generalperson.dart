@@ -22,6 +22,21 @@ class _GeneralPersonScreenState extends State<GeneralPersonScreen> {
       });
     }
   }
+  // ที่เม้นไว้คือโค๊ดที่เอาไว้เชื่อม firebase
+  // Future<void> _uploadImage() async {
+  //   if (_image == null) return;
+  //   String fileName = 'images/${DateTime.now().millisecondsSinceEpoch}.png';
+  //   try {
+  //     await FirebaseStorage.instance.ref(fileName).putFile(_image!);
+  //     String downloadURL = await FirebaseStorage.instance.ref(fileName).getDownloadURL();
+  //     setState(() {
+  //       _uploadedFileURL = downloadURL;
+  //     });
+  //     print('Upload successful. Download URL: $downloadURL');
+  //   } catch (e) {
+  //     print('Upload failed: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -97,13 +112,17 @@ class _GeneralPersonScreenState extends State<GeneralPersonScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                // _uploadImage();
+              },
               child: const Text('เสร็จสิ้น'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
                 minimumSize: const Size.fromHeight(50),
               ),
             ),
+            // if (_uploadedFileURL != null)
+            //   Text('รูปภาพที่อัปโหลดแล้ว: $_uploadedFileURL'),
           ],
         ),
       ),
