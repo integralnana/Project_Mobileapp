@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/model/profile.dart';
+import 'package:projectapp/screen/login.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -38,17 +39,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         if (snapshot.connectionState == ConnectionState.done) {
           return Scaffold(
-              appBar: AppBar(title: Text("สร้างบัญชีผู้ใช้")),
-              body: Container(
-                  child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 50.0, vertical: 50.0),
-                child: Form(
-                  key: formkey,
-                  child: SingleChildScrollView(
+            backgroundColor: Colors.pink[100],
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: formkey,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const SizedBox(height: 40),
+                        const Text(
+                          'สมัครสมาชิก',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 40),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text("อีเมล", style: GoogleFonts.anuphan()),
@@ -63,14 +75,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
+                            hintText: 'อีเมล',
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(25.0),
+                              borderSide: BorderSide.none,
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 15),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text("รหัสผ่าน", style: GoogleFonts.anuphan()),
@@ -81,16 +95,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           onSaved: (password) {
                             profile.password = password!;
                           },
+                          obscureText: true,
                           decoration: InputDecoration(
+                            hintText: 'รหัสผ่าน',
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(25.0),
+                              borderSide: BorderSide.none,
                             ),
                           ),
-                          obscureText: true,
                         ),
-                        SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 15),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text("เบอร์โทร", style: GoogleFonts.anuphan()),
@@ -101,20 +117,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           onSaved: (userTel) {
                             profile.userTel = userTel!;
                           },
-                          keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
+                            hintText: 'เบอร์โทร',
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(25.0),
+                              borderSide: BorderSide.none,
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: 15,
-                        ),
+                        const SizedBox(height: 40),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            child: Text("ลงทะเบียน"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[300],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25.0),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Text(
+                              "เสร็จสิ้น",
+                              style: TextStyle(fontSize: 18),
+                            ),
                             onPressed: () async {
                               if (formkey.currentState!.validate()) {
                                 formkey.currentState?.save();
@@ -124,18 +152,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           email: profile.email,
                                           password: profile.password);
                                   formkey.currentState?.reset();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => LoginScreen()),
+                                  );
                                 } on FirebaseAuthException catch (e) {
                                   print(e.message);
                                 }
                               }
                             },
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
                 ),
-              )));
+              ),
+            ),
+          );
         }
         return Scaffold(
           body: Center(
