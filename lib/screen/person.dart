@@ -61,7 +61,7 @@ class PersonScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             const Text(
-                              'นักศึกษามหาลัย',
+                              'นักศึกษามหาวิทยาลัย',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black,

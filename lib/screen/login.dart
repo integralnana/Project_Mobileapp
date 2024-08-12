@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:projectapp/screen/home.dart';
 import 'package:projectapp/screen/person.dart';
 import 'package:projectapp/screen/register.dart';
 
@@ -134,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const PersonScreen()),
+                                          const HomeScreen()),
                                 );
                               } on FirebaseAuthException catch (e) {
                                 print(e.message);
@@ -170,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) {
-                                return const RegisterScreen();
+                                return RegisterScreen();
                               }),
                             );
                           },
