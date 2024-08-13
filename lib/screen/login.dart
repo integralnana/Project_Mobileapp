@@ -24,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
       appId: '1:163897380043:android:ad7b0effe0942c72a79f4e',
       messagingSenderId: '163897380043',
       projectId: 'myproj-c6008',
+      storageBucket: "myproj-c6008.appspot.com",
     ),
   );
 

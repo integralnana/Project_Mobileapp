@@ -200,11 +200,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
-  String? _gender;
+  final _userNickController = TextEditingController();
+  final _studentIdController = TextEditingController();
+  String? _userType;
   File? _image;
 
   Future<void> _pickImage() async {
-    final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedImage =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedImage != null) {
       setState(() {
         _image = File(pickedImage.path);
@@ -215,39 +218,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
-        // สมัครสมาชิกด้วยอีเมลและรหัสผ่าน
-        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text,
           password: _passwordController.text,
         );
 
-        // อัปโหลดรูปภาพไปที่ Firebase Storage
         String imageUrl = '';
-        if (_image != null) {
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('user_images')
-              .child(userCredential.user!.uid + '.jpg');
-          await storageRef.putFile(_image!);
-          imageUrl = await storageRef.getDownloadURL();
+        try {
+          if (_image != null) {
+            final storageRef = FirebaseStorage.instance
+                .ref()
+                .child('user_images')
+                .child(userCredential.user!.uid + '.jpg');
+            await storageRef.putFile(_image!);
+            imageUrl = await storageRef.getDownloadURL();
+            print('Uploaded image URL: $imageUrl');
+          }
+        } catch (e) {
+          print('Error uploading image: $e');
         }
 
         Profile newUser = Profile(
-        userId: userCredential.user!.uid,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        gender: _gender ?? '',
-        imageUrl: imageUrl,
-      );
+          userId: userCredential.user!.uid,
+          email: _emailController.text,
+          phone: _phoneController.text,
+          userNick: _userNickController.text,
+          studentId: _studentIdController.text,
+          userType: _userType ?? "",
+          imageUrl: imageUrl,
+        );
 
-        await FirebaseFirestore.instance.collection('users').doc(newUser.userId).set(newUser.toMap());
-
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(newUser.userId)
+            .set(newUser.toMap());
 
         // แจ้งว่าลงทะเบียนสำเร็จ
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign up successful!')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Sign up successful!')));
       } on FirebaseAuthException catch (e) {
         // แสดงข้อผิดพลาด
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? 'Sign up failed!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? 'Sign up failed!')));
       }
     }
   }
@@ -263,75 +276,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(labelText: 'Email'),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(labelText: 'Password'),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.length < 6) {
-                      return 'Password must be at least 6 characters long';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(labelText: 'Phone'),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number';
-                    }
-                    return null;
-                  },
-                ),
-                DropdownButtonFormField<String>(
-                  value: _gender,
-                  items: ['Male', 'Female', 'Other'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _gender = newValue;
-                    });
-                  },
-                  decoration: InputDecoration(labelText: 'Gender'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select your gender';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _pickImage,
-                  child: Text('Pick an Image'),
-                ),
-                if (_image != null)
-                  Image.file(_image!, height: 100, width: 100),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _signUp,
-                  child: Text('Sign Up'),
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(labelText: 'Password'),
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.length < 6) {
+                        return 'Password must be at least 6 characters long';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: InputDecoration(labelText: 'Phone'),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your phone number';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _pickImage,
+                    child: Text('Pick an Image'),
+                  ),
+                  if (_image != null)
+                    Image.file(_image!, height: 100, width: 100),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _signUp,
+                    child: Text('Sign Up'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
