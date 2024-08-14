@@ -4,20 +4,20 @@
 class Profile {
   String userId;
   String userType;
-  String studentId;
-  String userNick;
   String email;
   String phone;
   String imageUrl;
+  String fname;
+  String lname;
 
   Profile({
     required this.userId,
     required this.userType,
-    required this.studentId,
-    required this.userNick,
     required this.email,
     required this.phone,
     required this.imageUrl,
+    required this.fname,
+    required this.lname,
   });
 
   // Convert UserModel object to map (for saving to Firestore)
@@ -27,9 +27,8 @@ class Profile {
       'email': email,
       'phone': phone,
       'imageUrl': imageUrl,
-      'userNick' : userNick,
       'userType' : userType,
-      'studentId' : studentId,
+      'fname' : fname,
     };
   }
 
@@ -40,8 +39,8 @@ class Profile {
       phone: map['phone'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
       userType: map['userType'] ?? '',
-      userNick: map['userNick'] ?? '',
-      studentId: map['studentId'] ?? '',
+      fname: map['fmane'] ?? '',
+      lname: map['lmane'] ?? '',
     );
   }
 }

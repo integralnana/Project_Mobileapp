@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String email = '';
   String password = '';
   final Future<FirebaseApp> firebase = Firebase.initializeApp(
-    options: FirebaseOptions(
+    options: const FirebaseOptions(
       apiKey: 'AIzaSyBO3VQD8fjFxezDPJYY8FSmZxrm_WMSmBU',
       appId: '1:163897380043:android:ad7b0effe0942c72a79f4e',
       messagingSenderId: '163897380043',
@@ -57,9 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
+                        Text(
                           'ยินดีต้อนรับ',
-                          style: TextStyle(
+                          style: GoogleFonts.anuphan(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
@@ -67,9 +67,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'กรุณาเข้าสู่ระบบ',
-                          style: TextStyle(
+                          style: GoogleFonts.anuphan(
                             fontSize: 18,
                             color: Colors.black,
                           ),
@@ -91,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             hintText: 'กรุณากรอกชื่อผู้ใช้งาน',
+                            hintStyle: GoogleFonts.anuphan(),
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
@@ -113,6 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: 'กรุณากรอกรหัสผ่าน',
+                            hintStyle: GoogleFonts.anuphan(),
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
@@ -135,8 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          const HomeScreen()),
+                                      builder: (context) => const HomeScreen()),
                                 );
                               } on FirebaseAuthException catch (e) {
                                 print(e.message);
@@ -150,17 +151,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          child: const Text(
+                          child: Text(
                             'ล็อกอิน',
-                            style: TextStyle(fontSize: 18),
+                            style: GoogleFonts.anuphan(
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextButton(
                           onPressed: () {},
-                          child: const Text(
+                          child: Text(
                             'ลืมรหัสผ่าน',
-                            style: TextStyle(
+                            style: GoogleFonts.anuphan(
                               color: Colors.grey,
                               fontSize: 16,
                             ),
@@ -172,13 +175,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) {
-                                return RegisterScreen();
+                                return PersonScreen();
                               }),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             'สมัครสมาชิก',
-                            style: TextStyle(
+                            style: GoogleFonts.anuphan(
                               color: Colors.black,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -202,10 +205,4 @@ class _LoginScreenState extends State<LoginScreen> {
       },
     );
   }
-}
-
-void main() {
-  runApp(const MaterialApp(
-    home: LoginScreen(),
-  ));
 }

@@ -1,196 +1,17 @@
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:flutter/material.dart';
-// import 'package:form_field_validator/form_field_validator.dart';
-// import 'package:google_fonts/google_fonts.dart';
-// import 'package:projectapp/model/profile.dart';
-// import 'package:projectapp/screen/login.dart';
-
-// class RegisterScreen extends StatefulWidget {
-//   const RegisterScreen({super.key});
-
-//   @override
-//   State<RegisterScreen> createState() => _RegisterScreenState();
-// }
-
-// class _RegisterScreenState extends State<RegisterScreen> {
-//   final formkey = GlobalKey<FormState>();
-//   Profile profile = Profile(email: '', password: '', userId: '', userTel: '');
-//   final Future<FirebaseApp> firebase = Firebase.initializeApp(
-//       options: FirebaseOptions(
-//           apiKey: 'AIzaSyBO3VQD8fjFxezDPJYY8FSmZxrm_WMSmBU',
-//           appId: '1:163897380043:android:ad7b0effe0942c72a79f4e',
-//           messagingSenderId: '163897380043',
-//           projectId: 'myproj-c6008'));
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return FutureBuilder(
-//       future: firebase,
-//       builder: (context, snapshot) {
-//         if (snapshot.hasError) {
-//           return Scaffold(
-//               appBar: AppBar(
-//                 title: Text("Error"),
-//               ),
-//               body: Center(
-//                 child: Text("${snapshot.error}"),
-//               ));
-//         }
-//         if (snapshot.connectionState == ConnectionState.done) {
-//           return Scaffold(
-//             backgroundColor: Colors.pink[100],
-//             body: Center(
-//               child: Padding(
-//                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
-//                 child: SingleChildScrollView(
-//                   child: Form(
-//                     key: formkey,
-//                     child: Column(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       crossAxisAlignment: CrossAxisAlignment.stretch,
-//                       children: [
-//                         const SizedBox(height: 40),
-//                         const Text(
-//                           'สมัครสมาชิก',
-//                           style: TextStyle(
-//                             fontSize: 32,
-//                             fontWeight: FontWeight.bold,
-//                             color: Colors.black,
-//                           ),
-//                           textAlign: TextAlign.center,
-//                         ),
-//                         const SizedBox(height: 40),
-//                         Align(
-//                           alignment: Alignment.centerLeft,
-//                           child: Text("อีเมล", style: GoogleFonts.anuphan()),
-//                         ),
-//                         TextFormField(
-//                           validator: MultiValidator([
-//                             RequiredValidator(errorText: "กรุณากรอกอีเมล"),
-//                             EmailValidator(errorText: "รูปแบบอีเมลไม่ถูกต้อง"),
-//                           ]),
-//                           onSaved: (email) {
-//                             profile.email = email!;
-//                           },
-//                           keyboardType: TextInputType.emailAddress,
-//                           decoration: InputDecoration(
-//                             hintText: 'อีเมล',
-//                             filled: true,
-//                             fillColor: Colors.white,
-//                             border: OutlineInputBorder(
-//                               borderRadius: BorderRadius.circular(25.0),
-//                               borderSide: BorderSide.none,
-//                             ),
-//                           ),
-//                         ),
-//                         const SizedBox(height: 15),
-//                         Align(
-//                           alignment: Alignment.centerLeft,
-//                           child: Text("รหัสผ่าน", style: GoogleFonts.anuphan()),
-//                         ),
-//                         TextFormField(
-//                           validator:
-//                               RequiredValidator(errorText: "กรุณากรอกรหัสผ่าน"),
-//                           onSaved: (password) {
-//                             profile.password = password!;
-//                           },
-//                           obscureText: true,
-//                           decoration: InputDecoration(
-//                             hintText: 'รหัสผ่าน',
-//                             filled: true,
-//                             fillColor: Colors.white,
-//                             border: OutlineInputBorder(
-//                               borderRadius: BorderRadius.circular(25.0),
-//                               borderSide: BorderSide.none,
-//                             ),
-//                           ),
-//                         ),
-//                         const SizedBox(height: 15),
-//                         Align(
-//                           alignment: Alignment.centerLeft,
-//                           child: Text("เบอร์โทร", style: GoogleFonts.anuphan()),
-//                         ),
-//                         TextFormField(
-//                           validator:
-//                               RequiredValidator(errorText: "กรุณากรอกเบอร์โทร"),
-//                           onSaved: (userTel) {
-//                             profile.userTel = userTel!;
-//                           },
-//                           keyboardType: TextInputType.phone,
-//                           decoration: InputDecoration(
-//                             hintText: 'เบอร์โทร',
-//                             filled: true,
-//                             fillColor: Colors.white,
-//                             border: OutlineInputBorder(
-//                               borderRadius: BorderRadius.circular(25.0),
-//                               borderSide: BorderSide.none,
-//                             ),
-//                           ),
-//                         ),
-//                         const SizedBox(height: 40),
-//                         SizedBox(
-//                           width: double.infinity,
-//                           child: ElevatedButton(
-//                             style: ElevatedButton.styleFrom(
-//                               backgroundColor: Colors.blue[300],
-//                               shape: RoundedRectangleBorder(
-//                                 borderRadius: BorderRadius.circular(25.0),
-//                               ),
-//                               padding: const EdgeInsets.symmetric(vertical: 16),
-//                             ),
-//                             child: const Text(
-//                               "เสร็จสิ้น",
-//                               style: TextStyle(fontSize: 18),
-//                             ),
-//                             onPressed: () async {
-//                               if (formkey.currentState!.validate()) {
-//                                 formkey.currentState?.save();
-//                                 try {
-//                                   await FirebaseAuth.instance
-//                                       .createUserWithEmailAndPassword(
-//                                           email: profile.email,
-//                                           password: profile.password);
-//                                   formkey.currentState?.reset();
-//                                   Navigator.push(
-//                                     context,
-//                                     MaterialPageRoute(
-//                                         builder: (context) => LoginScreen()),
-//                                   );
-//                                 } on FirebaseAuthException catch (e) {
-//                                   print(e.message);
-//                                 }
-//                               }
-//                             },
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           );
-//         }
-//         return Scaffold(
-//           body: Center(
-//             child: CircularProgressIndicator(),
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:form_field_validator/form_field_validator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:projectapp/model/profile.dart';
 
 class RegisterScreen extends StatefulWidget {
+  final String userType;
+  RegisterScreen({this.userType = ""});
+
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
 }
@@ -200,9 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _userNickController = TextEditingController();
-  final _studentIdController = TextEditingController();
-  String? _userType;
+  final _fnameController = TextEditingController();
+  final _lnameController = TextEditingController();
   File? _image;
 
   Future<void> _pickImage() async {
@@ -243,9 +63,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           userId: userCredential.user!.uid,
           email: _emailController.text,
           phone: _phoneController.text,
-          userNick: _userNickController.text,
-          studentId: _studentIdController.text,
-          userType: _userType ?? "",
+          userType: widget.userType,
+          fname: _fnameController.text,
+          lname: _lnameController.text,
           imageUrl: imageUrl,
         );
 
@@ -268,61 +88,148 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Sign Up'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
+      backgroundColor: Colors.pink[100],
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Form(
+            key: _formKey,
             child: SingleChildScrollView(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Text(
+                    'สมัครสมาชิกและสร้างโปรไฟล์ของคุณ',
+                    style: GoogleFonts.anuphan(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage:
+                          _image != null ? FileImage(_image!) : null,
+                      backgroundColor: Colors.grey[200],
+                      child: _image == null
+                          ? const Icon(
+                              Icons.camera_alt,
+                              size: 50,
+                              color: Colors.grey,
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("อีเมล", style: GoogleFonts.anuphan()),
+                  ),
                   TextFormField(
+                    validator: MultiValidator([
+                      RequiredValidator(errorText: "กรุณากรอกอีเมล"),
+                      EmailValidator(errorText: "รูปแบบอีเมลไม่ถูกต้อง"),
+                    ]),
                     controller: _emailController,
-                    decoration: InputDecoration(labelText: 'Email'),
                     keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      return null;
-                    },
+                    decoration: InputDecoration(
+                      hintText: 'กรุณากรอกอีเมล',
+                      hintStyle: GoogleFonts.anuphan(),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("รหัสผ่าน", style: GoogleFonts.anuphan()),
                   ),
                   TextFormField(
                     controller: _passwordController,
-                    decoration: InputDecoration(labelText: 'Password'),
+                    decoration: InputDecoration(
+                      hintText: 'กรุณากรอกรหัสผ่าน',
+                      hintStyle: GoogleFonts.anuphan(),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.length < 6) {
-                        return 'Password must be at least 6 characters long';
+                        return 'ความยาวของรหัสผ่านต้องมีอย่างน้อย 6 ตัว';
                       }
                       return null;
                     },
                   ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("ชื่อจริง", style: GoogleFonts.anuphan()),
+                  ),
+                  TextFormField(
+                    validator:
+                        RequiredValidator(errorText: "กรุณากรอกชื่อจริง"),
+                    controller: _fnameController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: 'กรุณากรอกชื่อจริง',
+                      hintStyle: GoogleFonts.anuphan(),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("นามสกุล", style: GoogleFonts.anuphan()),
+                  ),
+                  TextFormField(
+                    validator: RequiredValidator(errorText: "กรุณากรอกนามสกุล"),
+                    controller: _lnameController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: 'กรุณากรอกนามสกุล',
+                      hintStyle: GoogleFonts.anuphan(),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _phoneController,
-                    decoration: InputDecoration(labelText: 'Phone'),
+                    decoration: InputDecoration(labelText: 'เบอร์โทร'),
                     keyboardType: TextInputType.phone,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your phone number';
+                        return 'กรุณากรอกเบอร์โทร';
                       }
                       return null;
                     },
                   ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _pickImage,
-                    child: Text('Pick an Image'),
-                  ),
-                  if (_image != null)
-                    Image.file(_image!, height: 100, width: 100),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _signUp,
-                    child: Text('Sign Up'),
+                    child: Text('สมัครสมาชิก'),
                   ),
                 ],
               ),

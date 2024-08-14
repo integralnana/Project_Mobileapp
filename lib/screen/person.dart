@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:projectapp/screen/generalperson.dart';
-import 'package:projectapp/screen/student.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:projectapp/screen/register.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -10,6 +10,16 @@ void main() {
 
 class PersonScreen extends StatelessWidget {
   const PersonScreen({super.key});
+
+  Future<void> _setUserTypeAndNavigate(
+      BuildContext context, String userType) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RegisterScreen(userType: userType),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +32,9 @@ class PersonScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'คุณเป็นใคร',
-                style: TextStyle(
+                style: GoogleFonts.anuphan(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -38,13 +48,7 @@ class PersonScreen extends StatelessWidget {
                   Column(
                     children: [
                       GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const StudentScreen()),
-                          );
-                        },
+                        onTap: () => _setUserTypeAndNavigate(context, '1'),
                         child: Column(
                           children: [
                             Container(
@@ -60,9 +64,9 @@ class PersonScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
+                            Text(
                               'นักศึกษามหาวิทยาลัย',
-                              style: TextStyle(
+                              style: GoogleFonts.anuphan(
                                 fontSize: 16,
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
@@ -76,14 +80,7 @@ class PersonScreen extends StatelessWidget {
                   Column(
                     children: [
                       GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const GeneralPersonScreen()),
-                          );
-                        },
+                        onTap: () => _setUserTypeAndNavigate(context, '2'),
                         child: Column(
                           children: [
                             Container(
@@ -99,9 +96,9 @@ class PersonScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
+                            Text(
                               'บุคคลทั่วไป',
-                              style: TextStyle(
+                              style: GoogleFonts.anuphan(
                                 fontSize: 16,
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,

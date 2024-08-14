@@ -1,8 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:projectapp/model/profile.dart';
 import 'package:projectapp/screen/Vip.dart';
 import 'package:projectapp/screen/login.dart';
-import 'package:projectapp/screen/person.dart';
 import 'package:projectapp/screen/profile.dart';
 import 'package:projectapp/screen/register.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
@@ -25,11 +24,11 @@ class HomeScreen extends StatelessWidget {
               _scaffoldKey.currentState?.openDrawer();
             },
           ),
-          title: Stack(
+          title: const Stack(
             children: [
               Align(
                 alignment: Alignment.center,
-                child: const Text('หน้าหลัก'),
+                child: Text('หน้าหลัก'),
               ),
             ],
           ),
@@ -85,8 +84,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => RegisterScreen()),
+                  MaterialPageRoute(builder: (context) => RegisterScreen()),
                 );
               },
             ),
@@ -101,19 +99,31 @@ class HomeScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('เลือกประเภทบุคคล'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PersonScreen()),
-                );
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('ออกจากระบบ'),
-              onTap: () {},
+              onTap: () async {
+                try {
+                  await FirebaseAuth.instance.signOut();
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user == null) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('ออกจากระบบไม่สำเร็จ โปรดลองอีกครั้ง'),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('เกิดข้อผิดพลาด: $e'),
+                    ),
+                  );
+                }
+              },
             ),
           ],
         ),
