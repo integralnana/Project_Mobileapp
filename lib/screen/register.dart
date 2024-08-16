@@ -7,11 +7,9 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:projectapp/model/profile.dart';
+import 'package:projectapp/screen/home.dart';
 
 class RegisterScreen extends StatefulWidget {
-  final String userType;
-  RegisterScreen({this.userType = ""});
-
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
 }
@@ -36,54 +34,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _signUp() async {
-    if (_formKey.currentState?.validate() ?? false) {
+  if (_formKey.currentState?.validate() ?? false) {
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      String imageUrl = '';
       try {
-        UserCredential userCredential =
-            await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-
-        String imageUrl = '';
-        try {
-          if (_image != null) {
-            final storageRef = FirebaseStorage.instance
-                .ref()
-                .child('user_images')
-                .child(userCredential.user!.uid + '.jpg');
-            await storageRef.putFile(_image!);
-            imageUrl = await storageRef.getDownloadURL();
-            print('Uploaded image URL: $imageUrl');
-          }
-        } catch (e) {
-          print('Error uploading image: $e');
+        if (_image != null) {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('user_images')
+              .child(userCredential.user!.uid + '.jpg');
+          await storageRef.putFile(_image!);
+          imageUrl = await storageRef.getDownloadURL();
+          print('Uploaded image URL: $imageUrl');
         }
-
-        Profile newUser = Profile(
-          userId: userCredential.user!.uid,
-          email: _emailController.text,
-          phone: _phoneController.text,
-          userType: widget.userType,
-          fname: _fnameController.text,
-          lname: _lnameController.text,
-          imageUrl: imageUrl,
-        );
-
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(newUser.userId)
-            .set(newUser.toMap());
-
-        // แจ้งว่าลงทะเบียนสำเร็จ
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Sign up successful!')));
-      } on FirebaseAuthException catch (e) {
-        // แสดงข้อผิดพลาด
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message ?? 'Sign up failed!')));
+      } catch (e) {
+        print('Error uploading image: $e');
       }
+
+      Profile newUser = Profile(
+        userId: userCredential.user!.uid,
+        email: _emailController.text,
+        phone: _phoneController.text,
+        fname: _fnameController.text,
+        lname: _lnameController.text,
+        imageUrl: imageUrl,
+      );
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(newUser.userId)
+          .set(newUser.toMap());
+
+      // นำทางไปยัง HomeScreen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(
+            email: _emailController.text,
+            password: _passwordController.text,
+            fname: _fnameController.text,
+            lname: _lnameController.text,
+            phone: _phoneController.text,
+            imageUrl: imageUrl,
+          ),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      // แสดงข้อผิดพลาด
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Sign up failed!')));
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     validator: MultiValidator([
                       RequiredValidator(errorText: "กรุณากรอกอีเมล"),
                       EmailValidator(errorText: "รูปแบบอีเมลไม่ถูกต้อง"),
-                    ]),
+                    ]).call,
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
@@ -182,7 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     validator:
                         RequiredValidator(errorText: "กรุณากรอกชื่อจริง"),
                     controller: _fnameController,
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: TextInputType.name,
                     decoration: InputDecoration(
                       hintText: 'กรุณากรอกชื่อจริง',
                       hintStyle: GoogleFonts.anuphan(),
@@ -202,7 +210,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     validator: RequiredValidator(errorText: "กรุณากรอกนามสกุล"),
                     controller: _lnameController,
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: TextInputType.name,
                     decoration: InputDecoration(
                       hintText: 'กรุณากรอกนามสกุล',
                       hintStyle: GoogleFonts.anuphan(),
@@ -215,21 +223,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: InputDecoration(labelText: 'เบอร์โทร'),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'กรุณากรอกเบอร์โทร';
-                      }
-                      return null;
-                    },
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("เบอร์โทร", style: GoogleFonts.anuphan()),
                   ),
+                  TextFormField(
+                    validator:
+                        RequiredValidator(errorText: "กรุณากรอกเบอร์โทร"),
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'กรุณากรอกเบอร์โทร',
+                      hintStyle: GoogleFonts.anuphan(),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _signUp,
-                    child: Text('สมัครสมาชิก'),
+                    child: Text('สมัครสมาชิก',style: GoogleFonts.anuphan(),),
                   ),
                 ],
               ),

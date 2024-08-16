@@ -3,7 +3,6 @@
 
 class Profile {
   String userId;
-  String userType;
   String email;
   String phone;
   String imageUrl;
@@ -12,7 +11,6 @@ class Profile {
 
   Profile({
     required this.userId,
-    required this.userType,
     required this.email,
     required this.phone,
     required this.imageUrl,
@@ -27,8 +25,8 @@ class Profile {
       'email': email,
       'phone': phone,
       'imageUrl': imageUrl,
-      'userType' : userType,
       'fname' : fname,
+      'lname' : lname,
     };
   }
 
@@ -38,7 +36,6 @@ class Profile {
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      userType: map['userType'] ?? '',
       fname: map['fmane'] ?? '',
       lname: map['lmane'] ?? '',
     );

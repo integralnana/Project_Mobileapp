@@ -7,12 +7,26 @@ import 'package:projectapp/screen/register.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final String email;
+  final String password;
+  final String fname;
+  final String lname;
+  final String phone;
+  final String imageUrl;
+  HomeScreen(
+      {Key? key,
+      required this.email,
+      required this.password,
+      required this.fname,
+      required this.lname,
+      required this.phone,
+      required this.imageUrl})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    
     final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.pink[100],
@@ -46,16 +60,27 @@ class HomeScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
+            DrawerHeader(
               decoration: BoxDecoration(
                 color: Colors.orangeAccent,
               ),
-              child: Text(
-                'เมนู',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    'เมนู',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage:
+                        imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                    child:
+                        imageUrl.isEmpty ? Icon(Icons.person, size: 50) : null,
+                  ),
+                ],
               ),
             ),
             ListTile(
@@ -183,10 +208,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-void main() {
-  runApp(const MaterialApp(
-    home: HomeScreen(),
-  ));
 }
