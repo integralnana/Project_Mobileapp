@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/screen/Vip.dart';
 import 'package:projectapp/screen/login.dart';
 import 'package:projectapp/screen/profile.dart';
-import 'package:projectapp/screen/register.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -13,6 +13,7 @@ class HomeScreen extends StatelessWidget {
   final String lname;
   final String phone;
   final String imageUrl;
+
   HomeScreen(
       {Key? key,
       required this.email,
@@ -25,37 +26,30 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.pink[100],
       appBar: AppBar(
-          backgroundColor: Colors.orangeAccent,
-          leading: IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              _scaffoldKey.currentState?.openDrawer();
-            },
+        backgroundColor: Colors.orangeAccent,
+        leading: IconButton(
+          icon: const Icon(Icons.person),
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer();
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat),
+            onPressed: () {},
           ),
-          title: const Stack(
-            children: [
-              Align(
-                alignment: Alignment.center,
-                child: Text('หน้าหลัก'),
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {},
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.chat),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.notifications),
-              onPressed: () {},
-            ),
-          ]),
+        ],
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -67,9 +61,9 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'เมนู',
-                    style: TextStyle(
-                      color: Colors.white,
+                    '$fname ${lname[0]}.',
+                    style: GoogleFonts.anuphan(
+                      fontWeight: FontWeight.bold,
                       fontSize: 24,
                     ),
                   ),
@@ -85,37 +79,22 @@ class HomeScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.account_circle),
-              title: const Text('โปรไฟล์'),
+              title: Text('โปรไฟล์', style: GoogleFonts.anuphan()),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_circle),
-              title: const Text('ล๋็อกอิน'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_circle),
-              title: const Text('สมัครสมาชิก'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RegisterScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => ProfileScreen(
+                            fname: fname,
+                            lname: lname,
+                            imageUrl: imageUrl,
+                          )),
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.diamond),
-              title: const Text('สมัคร VIP'),
+              title: Text('สมัคร VIP', style: GoogleFonts.anuphan()),
               onTap: () {
                 Navigator.push(
                   context,
@@ -125,7 +104,7 @@ class HomeScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout),
-              title: const Text('ออกจากระบบ'),
+              title: Text('ออกจากระบบ', style: GoogleFonts.anuphan()),
               onTap: () async {
                 try {
                   await FirebaseAuth.instance.signOut();
@@ -159,9 +138,9 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'กรุณาเลือกรายการ',
-                style: TextStyle(
+                style: GoogleFonts.anuphan(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -181,9 +160,11 @@ class HomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'แชร์ชื้อสินค้า',
-                  style: TextStyle(color: Colors.black),
+                  style: GoogleFonts.anuphan(
+                    color: Colors.black,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -196,9 +177,11 @@ class HomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'สินค้าลดราคา',
-                  style: TextStyle(color: Colors.black),
+                  style: GoogleFonts.anuphan(
+                    color: Colors.black,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/screen/report.dart';
 
-void main() {
-  runApp(ProfileScreen());
-}
-
 class ProfileScreen extends StatefulWidget {
+  final String fname;
+  final String lname;
+  final String imageUrl;
+
+  ProfileScreen({
+    required this.fname,
+    required this.lname,
+    required this.imageUrl,
+  });
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
@@ -26,11 +31,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.amber,
-          title: Text('โปรไฟล์', style: GoogleFonts.prompt()),
+          title: Text('โปรไฟล์', style: GoogleFonts.anuphan()),
           centerTitle: true,
         ),
         body: Padding(
@@ -38,7 +44,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ProfileHeader(averageRating: _averageRating),
+              ProfileHeader(
+                averageRating: _averageRating,
+                fname: widget.fname,
+                lname: widget.lname,
+                imageUrl: widget.imageUrl,
+              ),
               SizedBox(height: 16),
               ProfileStats(),
               SizedBox(height: 16),
@@ -52,9 +63,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class ProfileHeader extends StatelessWidget {
+  final String fname;
+  final String lname;
+  final String imageUrl;
   final double averageRating;
 
-  ProfileHeader({required this.averageRating});
+  ProfileHeader(
+      {required this.fname,
+      required this.lname,
+      required this.imageUrl,
+      required this.averageRating});
 
   @override
   Widget build(BuildContext context) {
@@ -68,16 +86,17 @@ class ProfileHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundColor: Colors.grey,
-            child: Icon(Icons.person, size: 40, color: Colors.white),
+            backgroundImage:
+                imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+            child: imageUrl.isEmpty ? Icon(Icons.person, size: 50) : null,
           ),
           SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Jaktorn',
-                style: GoogleFonts.prompt(
+                fname + " " + lname[0] + ".",
+                style: GoogleFonts.anuphan(
                     fontSize: 24, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
@@ -87,7 +106,7 @@ class ProfileHeader extends StatelessWidget {
                   SizedBox(width: 4),
                   Text(
                     '${averageRating.toStringAsFixed(1)}/5',
-                    style: GoogleFonts.prompt(fontSize: 18),
+                    style: GoogleFonts.anuphan(fontSize: 18),
                   ),
                 ],
               ),
@@ -105,7 +124,7 @@ class ProfileHeader extends StatelessWidget {
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255)),
             child: Row(
               children: [
-                Text('รายงาน', style: GoogleFonts.prompt()),
+                Text('รายงาน', style: GoogleFonts.anuphan()),
                 SizedBox(width: 4),
                 Icon(Icons.flag),
               ],
@@ -131,7 +150,7 @@ class ProfileStats extends StatelessWidget {
         children: [
           Text(
             'ความสำเร็จในการร่วมแชร์ซื้อสินค้า : 15',
-            style: GoogleFonts.prompt(fontSize: 18),
+            style: GoogleFonts.anuphan(fontSize: 18),
           ),
         ],
       ),
@@ -168,7 +187,7 @@ class _ReviewSectionState extends State<ReviewSection> {
       children: [
         Text(
           'รีวิว',
-          style: GoogleFonts.prompt(fontSize: 24, fontWeight: FontWeight.bold),
+          style: GoogleFonts.anuphan(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 16),
         Expanded(
@@ -254,7 +273,7 @@ class ReviewItem extends StatelessWidget {
                 SizedBox(height: 4),
                 Text(
                   reviewText,
-                  style: GoogleFonts.prompt(fontSize: 16),
+                  style: GoogleFonts.anuphan(fontSize: 16),
                 ),
               ],
             ),

@@ -34,64 +34,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _signUp() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    try {
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-
-      String imageUrl = '';
+    if (_formKey.currentState?.validate() ?? false) {
       try {
-        if (_image != null) {
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('user_images')
-              .child(userCredential.user!.uid + '.jpg');
-          await storageRef.putFile(_image!);
-          imageUrl = await storageRef.getDownloadURL();
-          print('Uploaded image URL: $imageUrl');
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+
+        String imageUrl = '';
+        try {
+          if (_image != null) {
+            final storageRef = FirebaseStorage.instance
+                .ref()
+                .child('user_images')
+                .child(userCredential.user!.uid + '.jpg');
+            await storageRef.putFile(_image!);
+            imageUrl = await storageRef.getDownloadURL();
+            print('Uploaded image URL: $imageUrl');
+          }
+        } catch (e) {
+          print('Error uploading image: $e');
         }
-      } catch (e) {
-        print('Error uploading image: $e');
-      }
 
-      Profile newUser = Profile(
-        userId: userCredential.user!.uid,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        fname: _fnameController.text,
-        lname: _lnameController.text,
-        imageUrl: imageUrl,
-      );
+        Profile newUser = Profile(
+          userId: userCredential.user!.uid,
+          email: _emailController.text,
+          phone: _phoneController.text,
+          fname: _fnameController.text,
+          lname: _lnameController.text,
+          imageUrl: imageUrl,
+        );
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(newUser.userId)
-          .set(newUser.toMap());
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(newUser.userId)
+            .set(newUser.toMap());
 
-      // นำทางไปยัง HomeScreen
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(
-            email: _emailController.text,
-            password: _passwordController.text,
-            fname: _fnameController.text,
-            lname: _lnameController.text,
-            phone: _phoneController.text,
-            imageUrl: imageUrl,
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              email: _emailController.text,
+              password: _passwordController.text,
+              fname: _fnameController.text,
+              lname: _lnameController.text,
+              phone: _phoneController.text,
+              imageUrl: imageUrl,
+            ),
           ),
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      // แสดงข้อผิดพลาด
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Sign up failed!')));
+        );
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? 'Sign up failed!')));
+      }
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +244,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _signUp,
-                    child: Text('สมัครสมาชิก',style: GoogleFonts.anuphan(),),
+                    child: Text(
+                      'สมัครสมาชิก',
+                      style: GoogleFonts.anuphan(),
+                    ),
                   ),
                 ],
               ),
