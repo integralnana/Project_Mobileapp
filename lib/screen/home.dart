@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/screen/Vip.dart';
+import 'package:projectapp/screen/chat_screen.dart';
 import 'package:projectapp/screen/login.dart';
+import 'package:projectapp/screen/notifications_screen.dart';
 import 'package:projectapp/screen/profile.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
 
@@ -40,13 +42,26 @@ class HomeScreen extends StatelessWidget {
           },
         ),
         actions: [
+          // Modify this part in HomeScreen class to include navigation to the ChatScreen
           IconButton(
             icon: const Icon(Icons.chat),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ChatScreen()),
+              );
+            },
           ),
+
+          // Modify this part in HomeScreen class
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsScreen()),
+              );
+            },
           ),
         ],
       ),
