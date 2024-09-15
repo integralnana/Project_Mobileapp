@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+
+import 'package:intl/intl.dart';
+import 'package:projectapp/model/post_model.dart'; // สำหรับจัดการวันที่
 
 class CreatePostScreen extends StatefulWidget {
   @override
@@ -6,14 +11,58 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  final _formKey = GlobalKey<FormState>();
-  String productName = '';
-  String productDetails = '';
-  String paymentMethod = 'จ่ายหลังนัดรับ';
-  String category = 'อาหาร';
-  String pickupTime = '17:30 น.';
-  String pickupDate = 'วันจันทร์, 17 มิถุนายน 2567';
+  final TextEditingController productNameController = TextEditingController();
   int participants = 2;
+  String paymentType = 'จ่ายหลังนัดรับ';
+  final TextEditingController descriptionController = TextEditingController();
+  String category = 'อาหาร';
+  final TextEditingController pickUpLocationController =
+      TextEditingController();
+  final TextEditingController pickUpDateTimeController =
+      TextEditingController();
+
+  File? image; // เก็บรูปภาพที่เลือก
+  final ImagePicker _picker = ImagePicker();
+
+  // ฟังก์ชันสำหรับเลือกรูปภาพ
+  Future<void> pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        image = File(pickedFile.path);
+      });
+    }
+  }
+
+  // ฟังก์ชันสำหรับเลือกวันที่
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        pickUpDateTimeController.text = DateFormat('yMMMMd').format(picked);
+      });
+    }
+  }
+
+  // ฟังก์ชันสำหรับเลือกเวลา
+  Future<void> _selectTime(BuildContext context) async {
+    TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        final time = DateFormat('jm')
+            .format(DateTime(2020, 1, 1, picked.hour, picked.minute));
+        pickUpDateTimeController.text += " $time";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,174 +73,153 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image upload (placeholder)
+              // แสดงรูปภาพที่เลือก
               GestureDetector(
-                onTap: () {
-                  // เปิดฟังก์ชันอัพโหลดรูปภาพที่นี่
-                },
+                onTap: pickImage,
                 child: Container(
                   height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.add, size: 50, color: Colors.grey),
+                  width: double.infinity,
+                  color: Colors.grey[300],
+                  child: image == null
+                      ? Center(child: Icon(Icons.add_a_photo))
+                      : Image.file(image!, fit: BoxFit.cover),
                 ),
               ),
-              SizedBox(height: 16),
-
-              // Product Name Field
-              TextFormField(
+              SizedBox(height: 10),
+              Text('หัวข้อ/ชื่อสินค้า'),
+              TextField(
+                controller: productNameController,
                 decoration: InputDecoration(
-                  labelText: 'หัวข้อ/ชื่อสินค้า',
+                  hintText: 'กรอกชื่อสินค้า',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'กรุณากรอกชื่อสินค้า';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  productName = value ?? '';
-                },
               ),
-              SizedBox(height: 16),
-
-              // Participants Dropdown
+              SizedBox(height: 10),
+              Text('จำนวนคนที่เข้าร่วม'),
               DropdownButtonFormField<int>(
-                decoration: InputDecoration(
-                  labelText: 'จำนวนคนนัดร่วม',
-                  border: OutlineInputBorder(),
-                ),
                 value: participants,
-                onChanged: (newValue) {
+                items: [2, 3, 4]
+                    .map((number) => DropdownMenuItem(
+                          value: number,
+                          child: Text('$number คน'),
+                        ))
+                    .toList(),
+                onChanged: (value) {
                   setState(() {
-                    participants = newValue!;
+                    participants = value ?? 2;
                   });
                 },
-                items: List.generate(10, (index) => index + 1)
-                    .map<DropdownMenuItem<int>>((int value) {
-                  return DropdownMenuItem<int>(
-                    value: value,
-                    child: Text('$value คน'),
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 16),
-
-              // Payment Method Dropdown
-              DropdownButtonFormField<String>(
                 decoration: InputDecoration(
-                  labelText: 'ประเภทการจ่ายเงิน',
                   border: OutlineInputBorder(),
                 ),
-                value: paymentMethod,
-                onChanged: (newValue) {
+              ),
+              SizedBox(height: 10),
+              Text('ประเภทการจ่ายเงิน'),
+              DropdownButtonFormField<String>(
+                value: paymentType,
+                items: ['จ่ายหลังนัดรับ', 'โอนก่อน']
+                    .map((method) => DropdownMenuItem(
+                          value: method,
+                          child: Text(method),
+                        ))
+                    .toList(),
+                onChanged: (value) {
                   setState(() {
-                    paymentMethod = newValue!;
+                    paymentType = value ?? 'จ่ายหลังนัดรับ';
                   });
                 },
-                items: <String>['จ่ายหลังนัดรับ', 'โอนก่อน']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 16),
-
-              // Product Details Field
-              TextFormField(
                 decoration: InputDecoration(
-                  labelText: 'รายละเอียดสินค้า',
                   border: OutlineInputBorder(),
                 ),
-                maxLines: 4,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'กรุณากรอกรายละเอียดสินค้า';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  productDetails = value ?? '';
-                },
               ),
-              SizedBox(height: 16),
-
-              // Category Dropdown
+              SizedBox(height: 10),
+              Text('รายละเอียดสินค้า'),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'กรอกรายละเอียดสินค้า',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 10),
+              Text('ประเภทสินค้า'),
               DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'ประเภทสินค้า',
-                  border: OutlineInputBorder(),
-                ),
                 value: category,
-                onChanged: (newValue) {
+                items: ['อาหาร', 'อาหารเสริมและความงาม']
+                    .map((category) => DropdownMenuItem(
+                          value: category,
+                          child: Text(category),
+                        ))
+                    .toList(),
+                onChanged: (value) {
                   setState(() {
-                    category = newValue!;
+                    category = value ?? 'อาหาร';
                   });
                 },
-                items: <String>[
-                  'อาหาร',
-                  'เสื้อผ้าและแฟชั่น',
-                  'เครื่องใช้ไฟฟ้า',
-                  'อาหารเสริมและความงาม'
-                ].map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
               ),
-              SizedBox(height: 16),
-
-              // Pickup Time and Location
+              SizedBox(height: 10),
+              Text('สถานที่นัดรับ'),
+              TextField(
+                controller: pickUpLocationController,
+                decoration: InputDecoration(
+                  hintText: 'ระบุสถานที่',
+                  border: OutlineInputBorder(),
+                ),
+                // คอมเมนต์โค้ดนี้ไว้ก่อนสำหรับ Google Maps API
+                // onTap: () async {
+                //   // เรียกใช้ Google Maps API เพื่อเลือกสถานที่
+                // },
+              ),
+              SizedBox(height: 10),
+              Text('วันและเวลานัดรับ'),
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // เปิดฟังก์ชันตั้งสถานที่นัดรับที่นี่
-                      },
-                      icon: Icon(Icons.location_pin),
-                      label: Text('ตั้งสถานที่นัดรับ'),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
+                    child: TextField(
+                      controller: pickUpDateTimeController,
                       decoration: InputDecoration(
-                        labelText: 'วันและเวลานัดรับ',
+                        hintText: 'เลือกวันและเวลา',
                         border: OutlineInputBorder(),
                       ),
-                      initialValue: pickupDate,
-                      onTap: () {
-                        // เปิดฟังก์ชันเลือกวันที่
-                      },
-                      onSaved: (value) {
-                        pickupDate = value ?? '';
-                      },
+                      readOnly: true,
                     ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.calendar_today),
+                    onPressed: () {
+                      _selectDate(context);
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.access_time),
+                    onPressed: () {
+                      _selectTime(context);
+                    },
                   ),
                 ],
               ),
-              SizedBox(height: 16),
-
-              // Submit Button
+              SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    _formKey.currentState?.save();
-                    // ส่งข้อมูลไปยังฐานข้อมูลที่นี่
-                    // ตัวอย่าง: await FirebaseFirestore.instance.collection('posts').add({...});
-                    Navigator.pop(context); // กลับไปหน้าแชร์โพสต์
-                  }
+                  final newPost = Post(
+                    productName: productNameController.text,
+                    participants: participants,
+                    paymentType: paymentType,
+                    description: descriptionController.text,
+                    category: category,
+                    pickUpLocation: pickUpLocationController.text,
+                    pickUpTime: pickUpDateTimeController.text,
+                    imagePath: image?.path,
+                  );
+                  Navigator.pop(context, newPost); // ส่งโพสต์กลับไป
                 },
                 child: Text('สร้างโพสต์'),
               ),
