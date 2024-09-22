@@ -1,142 +1,120 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(SharingScreen());
-}
+import 'package:projectapp/screen/chatgroup.dart';
+import 'package:projectapp/screen/createpost.dart';
 
 class SharingScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: CommunitySharingPage(),
-    );
-  }
-}
+  final currentUser =
+      FirebaseAuth.instance.currentUser; // รับ userId ของผู้ใช้ที่ล็อกอิน
+  // เพิ่มใน constructor
 
-class CommunitySharingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.pink[100],
       appBar: AppBar(
         title: Text('หน้าแชร์ซื้อสินค้า'),
-        backgroundColor: Colors.amber,
+        backgroundColor: Colors.orange,
         actions: [
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
-              // Add your logic here
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) {
+                  return createpostScreen(); // หน้า CreatePost ของคุณ
+                }),
+              );
             },
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          buildProductCard(
-            context,
-            'Jaktorn S.',
-            4.5,
-            'คริมกันแดดและครีมแต้มสิว',
-            3,
-            'อาหารเสริมและความงาม',
-            'assets/your_image_path1.png', // Replace with your image asset path
-            'รายละเอียด',
-            '1/3',
-            'โอนก่อน',
-            'วันศุกร์, 14 มิถุนายน 2567\n10:00 น.',
-          ),
-          buildProductCard(
-            context,
-            'Nawaphol S.',
-            4.3,
-            'บุฟเฟ่ต์โออิชิ',
-            4,
-            'อาหาร',
-            'assets/your_image_path2.png', // Replace with your image asset path
-            'รายละเอียด',
-            '4/4',
-            'จ่ายหลังนัดรับ',
-            'วันเสาร์, 15 มิถุนายน 2567\n15:00 น.',
-          ),
-        ],
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance.collection('groups').snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('ไม่มีข้อมูลกลุ่มที่สร้างไว้'));
+          }
+
+          return ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: snapshot.data!.docs.map((doc) {
+              var data = doc.data() as Map<String, dynamic>;
+              String groupId = doc.id; // ดึง document ID มาใช้เป็น groupId
+              String groupName = data['groupName'] ?? 'ชื่อกลุ่ม';
+              String groupImage = data['groupImage'] ?? '';
+              int groupSize = data['groupSize'] ?? 2;
+              int groupType = data['groupType'] ?? 1;
+
+              return buildGroupCard(
+                context,
+                groupId,
+                groupName,
+                groupImage,
+                groupSize,
+                groupType,
+                currentUser!.uid, // ใช้ currentUser?.uid ที่นี่
+              );
+            }).toList(),
+          );
+        },
       ),
     );
   }
 
-  Widget buildProductCard(
-    BuildContext context,
-    String userName,
-    double rating,
-    String productName,
-    int people,
-    String category,
-    String imagePath,
-    String description,
-    String availability,
-    String payment,
-    String pickupTime,
-  ) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  child: Icon(Icons.person),
-                ),
-                SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(userName,
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                        Text(rating.toString()),
-                      ],
-                    ),
-                  ],
-                ),
-                Spacer(),
-                Text(availability,
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(width: 10),
-                Icon(Icons.group),
-              ],
+  Widget buildGroupCard(BuildContext context, String groupId, String groupName,
+      String groupImage, int groupSize, int groupType, String currentUserId) {
+    // รับ currentUserId
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatGroupScreen(
+              groupId: groupId, // ส่ง groupId ของกลุ่มแชท
+              currentUserId:
+                  currentUserId, // ส่ง currentUserId ของผู้ใช้ที่ล็อกอิน
             ),
-            SizedBox(height: 10),
-            Image.asset(imagePath,
-                height: 100), // Replace with your image widget
-            SizedBox(height: 10),
-            Text(description),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {},
-              child: Text(category),
-            ),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  onPressed: () {},
-                  child: Text('ดูสถานที่นัดรับ'),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(payment, style: TextStyle(color: Colors.red)),
-                    Text(pickupTime, textAlign: TextAlign.right),
-                  ],
-                ),
-              ],
-            ),
-          ],
+          ),
+        );
+      },
+      child: Card(
+        margin: EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundImage: groupImage.isNotEmpty
+                        ? NetworkImage(groupImage)
+                        : AssetImage('assets/default_image.png')
+                            as ImageProvider,
+                    radius: 30,
+                  ),
+                  SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(groupName,
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('สมาชิก: $groupSize คน'),
+                    ],
+                  ),
+                  Spacer(),
+                  Text('ประเภท $groupType',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

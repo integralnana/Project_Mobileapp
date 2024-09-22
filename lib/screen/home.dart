@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/screen/Vip.dart';
 import 'package:projectapp/screen/login.dart';
 import 'package:projectapp/screen/profile.dart';
+import 'package:projectapp/screen/settings.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -99,6 +100,16 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => VipSubScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: Text('ตั้งค่า', style: GoogleFonts.anuphan()),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingScreen()),
                 );
               },
             ),
