@@ -6,8 +6,10 @@ class GroupChat {
   int groupSize;
   int groupType;
   DateTime createdAt;
-  double latitude;   // พิกัดละติจูด
-  double longitude;  // พิกัดลองจิจูด
+  double latitude; // พิกัดละติจูด
+  double longitude; // พิกัดลองจิจูด
+  String userId; // userId ของผู้สร้างกลุ่ม
+  String username; // ชื่อของผู้สร้างกลุ่ม
 
   GroupChat({
     required this.groupId,
@@ -19,6 +21,8 @@ class GroupChat {
     required this.createdAt,
     required this.latitude,
     required this.longitude,
+    required this.userId, // ต้องใส่ userId
+    required this.username, // ต้องใส่ username
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +36,8 @@ class GroupChat {
       'createdAt': createdAt.toIso8601String(),
       'latitude': latitude,
       'longitude': longitude,
+      'userId': userId, // บันทึก userId
+      'username': username, // บันทึก username
     };
   }
 
@@ -46,6 +52,8 @@ class GroupChat {
       createdAt: DateTime.parse(json['createdAt']),
       latitude: json['latitude'],
       longitude: json['longitude'],
+      userId: json['userId'], // ดึง userId
+      username: json['username'], // ดึง username
     );
   }
 }
