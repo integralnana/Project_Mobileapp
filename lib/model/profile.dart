@@ -8,15 +8,16 @@ class Profile {
   String imageUrl;
   String fname;
   String lname;
+  String username;
 
-  Profile({
-    required this.userId,
-    required this.email,
-    required this.phone,
-    required this.imageUrl,
-    required this.fname,
-    required this.lname,
-  });
+  Profile(
+      {required this.userId,
+      required this.email,
+      required this.phone,
+      required this.imageUrl,
+      required this.fname,
+      required this.lname,
+      required this.username});
 
   // Convert UserModel object to map (for saving to Firestore)
   Map<String, dynamic> toMap() {
@@ -25,8 +26,9 @@ class Profile {
       'email': email,
       'phone': phone,
       'imageUrl': imageUrl,
-      'fname' : fname,
-      'lname' : lname,
+      'fname': fname,
+      'lname': lname,
+      'username': username
     };
   }
 
@@ -36,8 +38,9 @@ class Profile {
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
-      fname: map['fmane'] ?? '',
-      lname: map['lmane'] ?? '',
+      fname: map['fname'] ?? '',
+      lname: map['lname'] ?? '',
+      username: map['username'] ?? '',
     );
   }
 }

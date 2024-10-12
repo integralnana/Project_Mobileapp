@@ -46,14 +46,7 @@ class AuthGate extends StatelessWidget {
               }
               if (userSnapshot.hasData) {
                 final userData = userSnapshot.data!;
-                return HomeScreen(
-                  email: userData['email'],
-                  fname: userData['fname'],
-                  lname: userData['lname'],
-                  phone: userData['phone'],
-                  imageUrl: userData['imageUrl'] ?? '',
-                  password: '',
-                );
+                return HomeScreen();
               }
               return Center(child: Text('User data not found'));
             },

@@ -21,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _fnameController = TextEditingController();
   final _lnameController = TextEditingController();
+  final _usernameController = TextEditingController();
   File? _image;
 
   Future<void> _pickImage() async {
@@ -64,6 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           fname: _fnameController.text,
           lname: _lnameController.text,
           imageUrl: imageUrl,
+          username: _usernameController.text,
         );
 
         await FirebaseFirestore.instance
@@ -73,14 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              email: _emailController.text,
-              password: _passwordController.text,
-              fname: _fnameController.text,
-              lname: _lnameController.text,
-              phone: _phoneController.text,
-              imageUrl: imageUrl,
-            ),
+            builder: (context) => HomeScreen(),
           ),
         );
       } on FirebaseAuthException catch (e) {
@@ -128,6 +123,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               color: Colors.grey,
                             )
                           : null,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Username", style: GoogleFonts.anuphan()),
+                  ),
+                  TextFormField(
+                    validator: MultiValidator([
+                      RequiredValidator(errorText: "กรุณากรอก Username"),
+                    ]).call,
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      hintText: 'กรุณากรอก Username',
+                      hintStyle: GoogleFonts.anuphan(),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,23 +8,42 @@ import 'package:projectapp/screen/profile.dart';
 import 'package:projectapp/screen/settings.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  final String email;
-  final String password;
-  final String fname;
-  final String lname;
-  final String phone;
-  final String imageUrl;
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
 
-  HomeScreen(
-      {Key? key,
-      required this.email,
-      required this.password,
-      required this.fname,
-      required this.lname,
-      required this.phone,
-      required this.imageUrl})
-      : super(key: key);
+class _HomeScreenState extends State<HomeScreen> {
+  String? _fname;
+  String? _lname;
+  String? _username;
+  String? _imageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          _fname = userDoc['fname'];
+          _lname = userDoc['lname'];
+          _username = userDoc['username'];
+          _imageUrl = userDoc['imageUrl'];
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,27 +75,43 @@ class HomeScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.orangeAccent,
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    '$fname ${lname[0]}.',
-                    style: GoogleFonts.anuphan(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
+            SizedBox(
+              height: 225,
+              child: DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.orangeAccent,
+                ),
+                child: Column(
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          '$_username',
+                          style: GoogleFonts.anuphan(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
+                        ),
+                        Text(
+                          _fname != null && _lname != null
+                              ? '($_fname ${_lname![0]}.)'
+                              : 'กำลังโหลด...',
+                          style: GoogleFonts.anuphan(
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage:
-                        imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                    child:
-                        imageUrl.isEmpty ? Icon(Icons.person, size: 50) : null,
-                  ),
-                ],
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage:
+                          _imageUrl != null ? NetworkImage(_imageUrl!) : null,
+                      child: _imageUrl == null
+                          ? Icon(Icons.person, size: 50)
+                          : null,
+                    ),
+                  ],
+                ),
               ),
             ),
             ListTile(
@@ -84,12 +120,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => ProfileScreen(
-                            fname: fname,
-                            lname: lname,
-                            imageUrl: imageUrl,
-                          )),
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
                 );
               },
             ),

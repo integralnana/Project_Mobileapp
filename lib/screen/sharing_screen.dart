@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:projectapp/screen/chatgroup.dart';
 import 'package:projectapp/screen/createpost.dart';
 
 class SharingScreen extends StatelessWidget {
   final currentUser =
       FirebaseAuth.instance.currentUser; // รับ userId ของผู้ใช้ที่ล็อกอิน
-  // เพิ่มใน constructor
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +50,8 @@ class SharingScreen extends StatelessWidget {
               String groupImage = data['groupImage'] ?? '';
               int groupSize = data['groupSize'] ?? 2;
               int groupType = data['groupType'] ?? 1;
+              double latitude = data['latitude'] ?? 0.0; // รับละติจูด
+              double longitude = data['longitude'] ?? 0.0; // รับลองจิจูด
 
               return buildGroupCard(
                 context,
@@ -58,6 +60,8 @@ class SharingScreen extends StatelessWidget {
                 groupImage,
                 groupSize,
                 groupType,
+                latitude,
+                longitude,
                 currentUser!.uid, // ใช้ currentUser?.uid ที่นี่
               );
             }).toList(),
@@ -67,8 +71,17 @@ class SharingScreen extends StatelessWidget {
     );
   }
 
-  Widget buildGroupCard(BuildContext context, String groupId, String groupName,
-      String groupImage, int groupSize, int groupType, String currentUserId) {
+  Widget buildGroupCard(
+    BuildContext context,
+    String groupId,
+    String groupName,
+    String groupImage,
+    int groupSize,
+    int groupType,
+    double latitude, // เพิ่มตัวแปร latitude
+    double longitude, // เพิ่มตัวแปร longitude
+    String currentUserId,
+  ) {
     // รับ currentUserId
     return GestureDetector(
       onTap: () {
@@ -113,10 +126,56 @@ class SharingScreen extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // แสดงแผนที่
+                  _showLocationDialog(context, latitude, longitude);
+                },
+                child: Text('ดูสถานที่'),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  void _showLocationDialog(BuildContext context, double latitude, double longitude) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('ตำแหน่งที่ปักหมุด'),
+          content: Container(
+            width: double.maxFinite,
+            height: 300,
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(latitude, longitude), // ใช้ละติจูดและลองจิจูด
+                zoom: 14.0,
+              ),
+              markers: {
+                Marker(
+                  markerId: MarkerId('selected-location'),
+                  position: LatLng(latitude, longitude),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueRed, // หมุดสีแดง
+                  ),
+                ),
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // ปิดป๊อปอัพ
+              },
+              child: Text('ตกลง'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

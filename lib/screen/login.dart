@@ -104,34 +104,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (formKey.currentState!.validate()) {
                         formKey.currentState?.save();
                         try {
-                          UserCredential userCredential =
-                              await FirebaseAuth.instance
-                                  .signInWithEmailAndPassword(
+                          UserCredential userCredential = await FirebaseAuth
+                              .instance
+                              .signInWithEmailAndPassword(
                             email: email,
                             password: password,
                           );
 
                           // Fetch user data from Firestore
-                          DocumentSnapshot userData =
-                              await FirebaseFirestore.instance
-                                  .collection('users')
-                                  .doc(userCredential.user!.uid)
-                                  .get();
+                          DocumentSnapshot userData = await FirebaseFirestore
+                              .instance
+                              .collection('users')
+                              .doc(userCredential.user!.uid)
+                              .get();
 
                           // Navigate to HomeScreen with user data
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => HomeScreen(
-                                email: userData['email'],
-                                fname: userData['fname'],
-                                lname: userData['lname'],
-                                phone: userData['phone'],
-                                imageUrl: userData[
-                                    'imageUrl'], // Pass image URL to HomeScreen
-                                password:
-                                    password, // Pass password stored in local state
-                              ),
+                              builder: (context) => HomeScreen(),
                             ),
                           );
                         } on FirebaseAuthException catch (e) {

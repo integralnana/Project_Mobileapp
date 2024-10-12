@@ -46,6 +46,7 @@ dependencies:
   intl_phone_number_input: ^0.7.4
   flutter_bloc: ^8.1.6
   community_material_icon: ^5.9.55
+  google_maps_flutter: ^2.6.1
 
 dev_dependencies:
   flutter_test:
