@@ -1,33 +1,136 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:form_field_validator/form_field_validator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:form_field_validator/form_field_validator.dart';
 import 'package:projectapp/screen/home.dart';
 import 'package:projectapp/screen/register.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final formKey = GlobalKey<FormState>();
-  String email = '';
-  String password = '';
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
+      try {
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        // Reload user to get the latest email verification status
+        await FirebaseAuth.instance.currentUser?.reload();
+        User? user = FirebaseAuth.instance.currentUser;
+
+        if (user != null) {
+          if (user.emailVerified) {
+            // If email is verified, navigate to HomeScreen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          } else {
+            // If email is not verified, show the verification dialog
+            _showEmailVerificationDialog();
+          }
+        }
+      } on FirebaseAuthException catch (e) {
+        setState(() {
+          _errorMessage = _getErrorMessage(e.code);
+        });
+      } catch (e) {
+        setState(() {
+          _errorMessage = 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ กรุณาลองใหม่อีกครั้ง';
+        });
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _getErrorMessage(String errorCode) {
+    switch (errorCode) {
+      case 'user-not-found':
+        return 'ไม่พบบัญชีผู้ใช้นี้';
+      case 'wrong-password':
+        return 'รหัสผ่านไม่ถูกต้อง';
+      case 'invalid-email':
+        return 'รูปแบบอีเมลไม่ถูกต้อง';
+      case 'user-disabled':
+        return 'บัญชีผู้ใช้นี้ถูกระงับ';
+      default:
+        return 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง';
+    }
+  }
+
+  void _showEmailVerificationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('ยืนยันอีเมล', style: GoogleFonts.anuphan()),
+          content: Text('กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ',
+              style: GoogleFonts.anuphan()),
+          actions: <Widget>[
+            TextButton(
+              child: Text('ตกลง', style: GoogleFonts.anuphan()),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child:
+                  Text('ส่งอีเมลยืนยันอีกครั้ง', style: GoogleFonts.anuphan()),
+              onPressed: () async {
+                await FirebaseAuth.instance.currentUser
+                    ?.sendEmailVerification();
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text('อีเมลยืนยันถูกส่งแล้ว',
+                          style: GoogleFonts.anuphan())),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.pink[100],
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
             child: Form(
-              key: formKey,
+              key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -41,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'กรุณาเข้าสู่ระบบ',
                     style: GoogleFonts.anuphan(
@@ -50,23 +153,40 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("อีเมล", style: GoogleFonts.anuphan()),
-                  ),
+                  SizedBox(height: 32),
+                  if (_errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Text(
+                        _errorMessage,
+                        style: GoogleFonts.anuphan(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'อีเมล',
+                      hintText: 'กรุณากรอกอีเมล',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                     validator: MultiValidator([
                       RequiredValidator(errorText: "กรุณากรอกอีเมล"),
                       EmailValidator(errorText: "รูปแบบอีเมลไม่ถูกต้อง"),
                     ]),
-                    onSaved: (value) {
-                      email = value!;
-                    },
                     keyboardType: TextInputType.emailAddress,
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
                     decoration: InputDecoration(
-                      hintText: 'กรุณากรอกชื่อผู้ใช้งาน',
-                      hintStyle: GoogleFonts.anuphan(),
+                      labelText: 'รหัสผ่าน',
+                      hintText: 'กรุณากรอกรหัสผ่าน',
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -74,62 +194,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderSide: BorderSide.none,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("รหัสผ่าน", style: GoogleFonts.anuphan()),
-                  ),
-                  TextFormField(
                     validator:
                         RequiredValidator(errorText: "กรุณากรอกรหัสผ่าน"),
-                    onSaved: (value) {
-                      password = value!;
-                    },
                     obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'กรุณากรอกรหัสผ่าน',
-                      hintStyle: GoogleFonts.anuphan(),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: () async {
-                      if (formKey.currentState!.validate()) {
-                        formKey.currentState?.save();
-                        try {
-                          UserCredential userCredential = await FirebaseAuth
-                              .instance
-                              .signInWithEmailAndPassword(
-                            email: email,
-                            password: password,
-                          );
-
-                          // Fetch user data from Firestore
-                          DocumentSnapshot userData = await FirebaseFirestore
-                              .instance
-                              .collection('users')
-                              .doc(userCredential.user!.uid)
-                              .get();
-
-                          // Navigate to HomeScreen with user data
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => HomeScreen(),
-                            ),
-                          );
-                        } on FirebaseAuthException catch (e) {
-                          print(e.message);
-                        }
-                      }
-                    },
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[300],
                       shape: RoundedRectangleBorder(
@@ -137,16 +208,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: Text(
-                      'ล็อกอิน',
-                      style: GoogleFonts.anuphan(
-                        fontSize: 18,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            'เข้าสู่ระบบ',
+                            style: GoogleFonts.anuphan(fontSize: 18),
+                          ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // TODO: Implement forgot password functionality
+                    },
                     child: Text(
                       'ลืมรหัสผ่าน',
                       style: GoogleFonts.anuphan(
@@ -155,14 +228,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) {
-                          return RegisterScreen();
-                        }),
+                        MaterialPageRoute(
+                            builder: (context) => RegisterScreen()),
                       );
                     },
                     child: Text(

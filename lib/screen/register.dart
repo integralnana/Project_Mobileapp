@@ -7,7 +7,7 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:projectapp/model/profile.dart';
-import 'package:projectapp/screen/home.dart';
+import 'package:projectapp/screen/login.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -37,50 +37,79 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
-        UserCredential userCredential =
-            await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-
-        String imageUrl = '';
-        try {
-          if (_image != null) {
-            final storageRef = FirebaseStorage.instance
-                .ref()
-                .child('user_images')
-                .child(userCredential.user!.uid + '.jpg');
-            await storageRef.putFile(_image!);
-            imageUrl = await storageRef.getDownloadURL();
-            print('Uploaded image URL: $imageUrl');
-          }
-        } catch (e) {
-          print('Error uploading image: $e');
-        }
-
-        Profile newUser = Profile(
-          userId: userCredential.user!.uid,
-          email: _emailController.text,
-          phone: _phoneController.text,
-          fname: _fnameController.text,
-          lname: _lnameController.text,
-          imageUrl: imageUrl,
-          username: _usernameController.text,
-        );
-
-        await FirebaseFirestore.instance
+        // ตรวจสอบว่า username ซ้ำหรือไม่
+        final usernameSnapshot = await FirebaseFirestore.instance
             .collection('users')
-            .doc(newUser.userId)
-            .set(newUser.toMap());
+            .where('username', isEqualTo: _usernameController.text)
+            .get();
 
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(),
-          ),
-        );
+        if (usernameSnapshot.docs.isNotEmpty) {
+          // แสดงข้อความแจ้งเตือนว่าชื่อผู้ใช้นี้ถูกใช้งานแล้ว
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Username นี้มีผู้ใช้งานแล้ว')),
+          );
+        } else {
+          // หาก username ไม่ซ้ำ ให้ดำเนินการสร้างบัญชี
+          UserCredential userCredential =
+              await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
+
+          // ส่งอีเมลยืนยันการสมัคร
+          await userCredential.user!.sendEmailVerification();
+
+          String imageUrl = '';
+          try {
+            if (_image != null) {
+              final storageRef = FirebaseStorage.instance
+                  .ref()
+                  .child('user_images')
+                  .child(userCredential.user!.uid + '.jpg');
+              await storageRef.putFile(_image!);
+              imageUrl = await storageRef.getDownloadURL();
+            }
+          } catch (e) {
+            print('Error uploading image: $e');
+          }
+
+          // สร้างข้อมูลผู้ใช้ใหม่
+          Profile newUser = Profile(
+            userId: userCredential.user!.uid, // ใช้ userId แทน username
+            email: _emailController.text,
+            phone: _phoneController.text,
+            fname: _fnameController.text,
+            lname: _lnameController.text,
+            imageUrl: imageUrl,
+            username: _usernameController.text,
+            point: '',
+            status: '1',
+          );
+
+          // ใช้ userId เป็น document ID
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(newUser.userId) // เก็บ userId แทน username
+              .set(newUser.toMap());
+
+          // แสดงข้อความแจ้งเตือนการส่งอีเมลยืนยัน
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text('Verification email sent! Please check your inbox.')),
+          );
+          await FirebaseAuth.instance.signOut();
+
+          // นำทางไปยังหน้า LoginScreen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+          );
+        }
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message ?? 'Sign up failed!')));
+          SnackBar(content: Text(e.message ?? 'Sign up failed!')),
+        );
       }
     }
   }

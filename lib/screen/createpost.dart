@@ -127,18 +127,18 @@ class _createpostScreenState extends State<createpostScreen> {
       String groupId = docRef.id;
 
       GroupChat newGroup = GroupChat(
-        groupId: groupId,
-        groupName: _groupNameController.text,
-        groupImage: _groupImageUrl!,
-        groupSize: _groupSize,
-        groupType: _groupType,
-        groupDesc: _groupDesc.text,
-        createdAt: _selectedDateTime!,
-        latitude: _selectedLocation!.latitude,
-        longitude: _selectedLocation!.longitude,
-        userId: userId,
-        username: username,
-      );
+          groupId: groupId,
+          groupName: _groupNameController.text,
+          groupImage: _groupImageUrl!,
+          groupSize: _groupSize,
+          groupType: _groupType,
+          groupDesc: _groupDesc.text,
+          createdAt: _selectedDateTime!,
+          latitude: _selectedLocation!.latitude,
+          longitude: _selectedLocation!.longitude,
+          userId: userId,
+          username: username,
+          groupStatus: '1');
 
       await docRef.set(newGroup.toJson());
 

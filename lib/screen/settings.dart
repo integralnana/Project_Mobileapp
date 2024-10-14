@@ -16,23 +16,14 @@ class _SettingScreenState extends State<SettingScreen> {
   File? _image;
   String? _imageUrl;
   String? _userId; // Store the logged-in user's ID
-  bool _isEmailVerified = false; // Track email verification status
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
-    _checkEmailVerification(); // Check if the email is already verified
   }
 
-  Future<void> _checkEmailVerification() async {
-    User? currentUser = FirebaseAuth.instance.currentUser;
-    await currentUser
-        ?.reload(); // Reload user data from Firebase to get updated info
-    setState(() {
-      _isEmailVerified = currentUser?.emailVerified ?? false;
-    });
-  }
+
 
   // Send verification email
   Future<void> _sendVerificationEmail() async {
@@ -168,18 +159,6 @@ class _SettingScreenState extends State<SettingScreen> {
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.pink[100]),
             ),
-            SizedBox(height: 16),
-            _isEmailVerified
-                ? Text(
-                    'Email is verified',
-                    style: TextStyle(color: Colors.green),
-                  )
-                : ElevatedButton(
-                    onPressed: _sendVerificationEmail,
-                    child: Text('Verify Email'),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink[100]),
-                  ),
           ],
         ),
       ),

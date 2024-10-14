@@ -9,6 +9,8 @@ class Profile {
   String fname;
   String lname;
   String username;
+  String point;
+  String status;
 
   Profile(
       {required this.userId,
@@ -17,6 +19,8 @@ class Profile {
       required this.imageUrl,
       required this.fname,
       required this.lname,
+      required this.status,
+      required this.point,
       required this.username});
 
   // Convert UserModel object to map (for saving to Firestore)
@@ -28,7 +32,9 @@ class Profile {
       'imageUrl': imageUrl,
       'fname': fname,
       'lname': lname,
-      'username': username
+      'point': point,
+      'username': username,
+      'status' : status
     };
   }
 
@@ -40,6 +46,8 @@ class Profile {
       imageUrl: map['imageUrl'] ?? '',
       fname: map['fname'] ?? '',
       lname: map['lname'] ?? '',
+      point: map['point'] ?? '',
+      status: map['status'] ?? '',
       username: map['username'] ?? '',
     );
   }

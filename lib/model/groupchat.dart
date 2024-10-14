@@ -6,10 +6,11 @@ class GroupChat {
   int groupSize;
   int groupType;
   DateTime createdAt;
-  double latitude; // พิกัดละติจูด
-  double longitude; // พิกัดลองจิจูด
-  String userId; // userId ของผู้สร้างกลุ่ม
-  String username; // ชื่อของผู้สร้างกลุ่ม
+  double latitude;
+  double longitude;
+  String groupStatus;
+  String userId;
+  String username;
 
   GroupChat({
     required this.groupId,
@@ -21,8 +22,11 @@ class GroupChat {
     required this.createdAt,
     required this.latitude,
     required this.longitude,
-    required this.userId, // ต้องใส่ userId
-    required this.username, // ต้องใส่ username
+
+    required this.groupStatus,
+    required this.userId,
+    required this.username,
+
   });
 
   Map<String, dynamic> toJson() {
@@ -36,24 +40,26 @@ class GroupChat {
       'createdAt': createdAt.toIso8601String(),
       'latitude': latitude,
       'longitude': longitude,
-      'userId': userId, // บันทึก userId
-      'username': username, // บันทึก username
+
+      'groupStatus': groupStatus,
+      'userId': userId,
+      'username': username,
     };
   }
 
   factory GroupChat.fromJson(Map<String, dynamic> json) {
     return GroupChat(
-      groupId: json['groupId'],
-      groupName: json['groupName'],
-      groupDesc: json['groupDesc'],
-      groupImage: json['groupImage'],
-      groupSize: json['groupSize'],
-      groupType: json['groupType'],
-      createdAt: DateTime.parse(json['createdAt']),
-      latitude: json['latitude'],
-      longitude: json['longitude'],
-      userId: json['userId'], // ดึง userId
-      username: json['username'], // ดึง username
-    );
+        groupId: json['groupId'],
+        groupName: json['groupName'],
+        groupDesc: json['groupDesc'],
+        groupImage: json['groupImage'],
+        groupSize: json['groupSize'],
+        groupType: json['groupType'],
+        createdAt: DateTime.parse(json['createdAt']),
+        latitude: json['latitude'],
+        longitude: json['longitude'],
+        userId: json['userId'], // ดึง userId
+        username: json['username'],
+        groupStatus: json['groupStatus']);
   }
 }
