@@ -197,7 +197,7 @@ class _createpostScreenState extends State<createpostScreen> {
       children: [
         TextFormField(
           controller: _groupNameController,
-          decoration: InputDecoration(labelText: 'Group Name'),
+          decoration: InputDecoration(labelText: 'หัวข้อ'),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter a group name';
@@ -208,7 +208,7 @@ class _createpostScreenState extends State<createpostScreen> {
         SizedBox(height: 16.0),
         TextFormField(
           controller: _groupDesc,
-          decoration: InputDecoration(labelText: 'Group Description'),
+          decoration: InputDecoration(labelText: 'รายละเอียด'),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter a group description';
@@ -227,11 +227,11 @@ class _createpostScreenState extends State<createpostScreen> {
   Widget _buildGroupSizeDropdown() {
     return DropdownButtonFormField<int>(
       value: _groupSize,
-      decoration: InputDecoration(labelText: 'Group Size'),
+      decoration: InputDecoration(labelText: 'จำนวน'),
       items: List.generate(9, (index) => index + 2).map((size) {
         return DropdownMenuItem<int>(
           value: size,
-          child: Text('$size members'),
+          child: Text('$size คน'),
         );
       }).toList(),
       onChanged: (value) {
@@ -245,10 +245,10 @@ class _createpostScreenState extends State<createpostScreen> {
   Widget _buildGroupTypeDropdown() {
     return DropdownButtonFormField<int>(
       value: _groupType,
-      decoration: InputDecoration(labelText: 'Group Type'),
+      decoration: InputDecoration(labelText: 'ประเภทการจ่ายเงิน'),
       items: [
-        DropdownMenuItem<int>(value: 1, child: Text('Type 1')),
-        DropdownMenuItem<int>(value: 2, child: Text('Type 2')),
+        DropdownMenuItem<int>(value: 1, child: Text('โอนก่อน')),
+        DropdownMenuItem<int>(value: 2, child: Text('จ่ายหลังนัดรับ')),
       ],
       onChanged: (value) {
         setState(() {
@@ -283,14 +283,14 @@ class _createpostScreenState extends State<createpostScreen> {
   Widget _buildLocationPicker() {
     return ElevatedButton(
       onPressed: _navigateAndPickLocation,
-      child: Text('เลือกสถานที่'),
+      child: Text('เลือกสถานที่นัดรับ'),
     );
   }
 
   Widget _buildCreateGroupButton() {
     return ElevatedButton(
       onPressed: _createGroup,
-      child: Text('Create Group'),
+      child: Text('สร้างโพสต์'),
     );
   }
 
