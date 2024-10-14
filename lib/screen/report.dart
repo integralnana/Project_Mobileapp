@@ -28,7 +28,7 @@ class ReportPage extends StatefulWidget {
 class _ReportPageState extends State<ReportPage> {
   List<String> reportTypes = [
     'แชทคุกคาม',
-    'ฉ่อโกง',
+    'ฉ้อโกง',
     'ไม่ยอมรับสินค้าหรือไม่ส่งสินค้า',
     'โพสต์ไม่เหมาะสม',
     'อื่นๆ'
@@ -36,7 +36,7 @@ class _ReportPageState extends State<ReportPage> {
 
   Map<String, bool> selectedReportTypes = {
     'แชทคุกคาม': false,
-    'ฉ่อโกง': false,
+    'ฉ้อโกง': false,
     'ไม่ยอมรับสินค้าหรือไม่ส่งสินค้า': false,
     'โพสต์ไม่เหมาะสม': false,
     'อื่นๆ': false
