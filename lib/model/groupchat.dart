@@ -22,9 +22,11 @@ class GroupChat {
     required this.createdAt,
     required this.latitude,
     required this.longitude,
+
     required this.groupStatus,
     required this.userId,
     required this.username,
+
   });
 
   Map<String, dynamic> toJson() {
@@ -38,6 +40,7 @@ class GroupChat {
       'createdAt': createdAt.toIso8601String(),
       'latitude': latitude,
       'longitude': longitude,
+
       'groupStatus': groupStatus,
       'userId': userId,
       'username': username,
