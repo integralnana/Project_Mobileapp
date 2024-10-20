@@ -18,8 +18,8 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
   final TextEditingController _messageController = TextEditingController();
   String? groupName;
   String? groupStatus;
-  double? latitude; // Changed to nullable
-  double? longitude; // Changed to nullable
+  double? latitude;
+  double? longitude;
 
   @override
   void initState() {
@@ -59,8 +59,14 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
     }
   }
 
-  String _formatTimestamp(Timestamp timestamp) {
-    return DateFormat('HH:mm').format(timestamp.toDate());
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp is Timestamp) {
+      return DateFormat('HH:mm').format(timestamp.toDate());
+    } else if (timestamp is String) {
+      return timestamp;
+    } else {
+      return 'Invalid timestamp';
+    }
   }
 
   Future<String> _getUserName(String userId) async {
@@ -284,7 +290,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                       var messageData = snapshot.data!.docs[index];
                       String messageText = messageData['text'];
                       String senderId = messageData['senderId'];
-                      Timestamp createdAt = messageData['createdAt'];
+                      var createdAt = messageData['createdAt'];
 
                       bool isCurrentUser = senderId == widget.currentUserId;
 
@@ -328,7 +334,9 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                                 ),
                               ),
                               Text(
-                                _formatTimestamp(createdAt),
+                                createdAt != null
+                                    ? _formatTimestamp(createdAt)
+                                    : 'กำลังประมวลผล...',
                                 style: GoogleFonts.anuphan(
                                   fontSize: 12,
                                   color: Colors.grey,
