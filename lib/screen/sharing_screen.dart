@@ -85,6 +85,7 @@ class SharingScreen extends StatelessWidget {
     double latitude = data['latitude'] ?? 0.0;
     double longitude = data['longitude'] ?? 0.0;
     int groupType = data['groupType'] ?? 1;
+    String productCategory = data['productCategory'] ?? 'ไม่ระบุประเภท';
     String formattedDateTime = 'ไม่ระบุเวลา';
 
     try {
@@ -117,7 +118,6 @@ class SharingScreen extends StatelessWidget {
             ),
             title:
                 Text(username, style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(formattedDateTime),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -128,8 +128,18 @@ class SharingScreen extends StatelessWidget {
           ),
           Padding(
             padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: Text(
+              'วันเวลาที่นัดรับ: $formattedDateTime',
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+          ),
+          Padding(
+            padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -141,7 +151,6 @@ class SharingScreen extends StatelessWidget {
                       style:
                           TextStyle(color: Colors.red.shade800, fontSize: 14)),
                 ),
-                SizedBox(width: 8),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
@@ -151,6 +160,18 @@ class SharingScreen extends StatelessWidget {
                   child: Text(
                     groupType == 1 ? 'โอนก่อน' : 'จ่ายหลังนัดรับ',
                     style: TextStyle(color: Colors.blue.shade800, fontSize: 14),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    productCategory,
+                    style:
+                        TextStyle(color: Colors.green.shade800, fontSize: 14),
                   ),
                 ),
               ],
