@@ -29,6 +29,14 @@
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
+	<key>FirebaseMessagingAutoInitEnabled</key>
+	<true/>
+	<key>FirebaseMessagingDerivedHostName</key>
+	<string>fcm.googleapis.com</string>
+	<key>FirebaseMessagingPort</key>
+	<integer>443</integer>
+	<key>FirebaseMessagingProtocol</key>
+	<string>https</string>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>

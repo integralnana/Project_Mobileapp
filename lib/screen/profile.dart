@@ -109,11 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Text(
-              'ความสำเร็จในการร่วมแชร์ซื้อสินค้า : 15',
-              style: GoogleFonts.anuphan(fontSize: 18),
-            ),
           ],
         ),
       ),

@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:projectapp/constant.dart';
+import 'package:projectapp/model/groupchat.dart';
 
 class ChatGroupScreen extends StatefulWidget {
   final String groupId;
@@ -25,6 +27,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
   void initState() {
     super.initState();
     _fetchGroupDetails();
+    _joinGroup();
   }
 
   Future<void> _fetchGroupDetails() async {
@@ -52,11 +55,40 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
           .add({
         'text': _messageController.text,
         'senderId': widget.currentUserId,
-        'createdAt': FieldValue.serverTimestamp(),
+        'setTime': FieldValue.serverTimestamp(),
       });
 
       _messageController.clear();
     }
+  }
+
+  Future<void> _joinGroup() async {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('groups')
+        .doc(widget.groupId)
+        .collection('userlist')
+        .doc(widget.currentUserId)
+        .get();
+
+    if (!userDoc.exists) {
+      await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.groupId)
+          .collection('userlist')
+          .doc(widget.currentUserId)
+          .set({'joinedAt': FieldValue.serverTimestamp()});
+    }
+  }
+
+  Future<void> _leaveGroup() async {
+    await FirebaseFirestore.instance
+        .collection('groups')
+        .doc(widget.groupId)
+        .collection('userlist')
+        .doc(widget.currentUserId)
+        .delete();
+
+    Navigator.pop(context);
   }
 
   String _formatTimestamp(dynamic timestamp) {
@@ -166,7 +198,13 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
         title: Center(
             child: Text('แชท',
                 style: GoogleFonts.anuphan(fontWeight: FontWeight.bold))),
-        backgroundColor: Colors.orange,
+        backgroundColor: AppTheme.appBarColor,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.exit_to_app),
+            onPressed: _leaveGroup,
+          ),
+        ],
       ),
       body: Container(
         color: Colors.pink[100],
@@ -197,8 +235,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                         text: TextSpan(
                           text: 'สถานะ : ',
                           style: GoogleFonts.anuphan(
-                              fontSize: 18,
-                              color: Colors.black), // สไตล์สำหรับคำว่า "สถานะ"
+                              fontSize: 18, color: Colors.black),
                           children: [
                             TextSpan(
                               text: groupStatus != null
@@ -208,7 +245,6 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black),
-                              // สไตล์สำหรับสถานะ
                             ),
                           ],
                         ),
@@ -244,19 +280,11 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                     return CircularProgressIndicator();
                   }
                   if (snapshot.hasData) {
-                    var createdAt = snapshot.data!['createdAt'];
-
-                    if (createdAt is Timestamp) {
-                      return Text(
-                        'เวลานัดรับสินค้า: ${_formatTimestamp(createdAt)}',
-                        style: GoogleFonts.anuphan(fontWeight: FontWeight.bold),
-                      );
-                    } else if (createdAt is String) {
-                      return Text(
-                        'เวลานัดรับสินค้า: $createdAt',
-                        style: GoogleFonts.anuphan(fontWeight: FontWeight.bold),
-                      );
-                    }
+                    var setTime = snapshot.data!['setTime'];
+                    return Text(
+                      'เวลานัดรับสินค้า: ${GroupChat.formatThaiDateTime(setTime)}',
+                      style: GoogleFonts.anuphan(fontWeight: FontWeight.bold),
+                    );
                   }
                   return Text('ไม่สามารถโหลดข้อมูลได้');
                 },
@@ -268,7 +296,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                     .collection('groups')
                     .doc(widget.groupId)
                     .collection('messages')
-                    .orderBy('createdAt', descending: true)
+                    .orderBy('setTime', descending: true)
                     .snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -290,7 +318,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                       var messageData = snapshot.data!.docs[index];
                       String messageText = messageData['text'];
                       String senderId = messageData['senderId'];
-                      var createdAt = messageData['createdAt'];
+                      var setTime = messageData['setTime'];
 
                       bool isCurrentUser = senderId == widget.currentUserId;
 
@@ -334,8 +362,8 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                                 ),
                               ),
                               Text(
-                                createdAt != null
-                                    ? _formatTimestamp(createdAt)
+                                setTime != null
+                                    ? _formatTimestamp(setTime)
                                     : 'กำลังประมวลผล...',
                                 style: GoogleFonts.anuphan(
                                   fontSize: 12,

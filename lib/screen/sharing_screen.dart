@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:projectapp/constant.dart';
+import 'package:projectapp/model/groupchat.dart';
 import 'package:projectapp/screen/chatgroup.dart';
 import 'package:projectapp/screen/createpost.dart';
-import 'package:intl/intl.dart';
 
 class SharingScreen extends StatelessWidget {
   final currentUser = FirebaseAuth.instance.currentUser;
@@ -30,10 +32,10 @@ class SharingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.pink[100],
       appBar: AppBar(
         title: Text('หน้าแชร์ซื้อสินค้า'),
-        backgroundColor: Colors.orange,
+        backgroundColor: AppTheme.appBarColor,
         actions: [
           IconButton(
             icon: Icon(Icons.add),
@@ -88,15 +90,13 @@ class SharingScreen extends StatelessWidget {
     String formattedDateTime = 'ไม่ระบุเวลา';
 
     try {
-      var createdAt = data['createdAt'];
-      if (createdAt is Timestamp) {
-        DateTime dateTime = createdAt.toDate();
-        formattedDateTime = DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
-      } else if (createdAt is String) {
-        DateTime dateTime = DateTime.parse(createdAt);
-        formattedDateTime = DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
+      var setTime = data['setTime'];
+      if (setTime is Timestamp) {
+        formattedDateTime = GroupChat.formatThaiDateTime(setTime);
+      } else if (setTime is String) {
+        formattedDateTime = GroupChat.formatThaiDateTime(setTime);
       } else {
-        print('Unexpected type for createdAt: ${createdAt.runtimeType}');
+        print('Unexpected type for setTime: ${setTime.runtimeType}');
       }
     } catch (e) {
       print('Error formatting date: $e');
@@ -117,7 +117,7 @@ class SharingScreen extends StatelessWidget {
             ),
             title:
                 Text(username, style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(formattedDateTime),
+            subtitle: Text(formattedDateTime), // ใช้ formattedDateTime ที่นี่
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -174,9 +174,10 @@ class SharingScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('รายละเอียด',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: GoogleFonts.anuphan(fontWeight: FontWeight.bold)),
                 SizedBox(height: 4),
-                Text(groupDesc, style: TextStyle(color: Colors.grey[700])),
+                Text(groupDesc,
+                    style: GoogleFonts.anuphan(color: Colors.grey[700])),
               ],
             ),
           ),
@@ -191,22 +192,20 @@ class SharingScreen extends StatelessWidget {
                     _showLocationDialog(context, latitude, longitude);
                   },
                   icon: Icon(Icons.location_on, size: 18),
-                  label: Text('ดูสถานที่นัดรับ'),
+                  label: Text(
+                    'ดูสถานที่นัดรับ',
+                    style: GoogleFonts.anuphan(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatGroupScreen(
-                          groupId: groupId,
-                          currentUserId: currentUser!.uid,
-                        ),
-                      ),
-                    );
+                    _joinGroup(context, groupId);
                   },
-                  child: Text('เข้าร่วมแชร์'),
+                  child: Text(
+                    'เข้าร่วมแชร์',
+                    style: GoogleFonts.anuphan(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                 ),
               ],
@@ -223,7 +222,10 @@ class SharingScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('สถานที่นัดรับ'),
+          title: Text(
+            'สถานที่นัดรับ',
+            style: GoogleFonts.anuphan(),
+          ),
           content: Container(
             width: double.maxFinite,
             height: 300,
@@ -247,11 +249,70 @@ class SharingScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('ตกลง'),
+              child: Text(
+                'ตกลง',
+                style: GoogleFonts.anuphan(),
+              ),
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _joinGroup(BuildContext context, String groupId) async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    DocumentReference groupRef =
+        FirebaseFirestore.instance.collection('groups').doc(groupId);
+    DocumentSnapshot groupDoc = await groupRef.get();
+
+    if (groupDoc.exists) {
+      var data = groupDoc.data() as Map<String, dynamic>;
+      int groupSize = data['groupSize'];
+
+      // ตรวจสอบสมาชิกที่มีอยู่ใน userlist
+      QuerySnapshot userList = await groupRef.collection('userlist').get();
+      bool userExists =
+          userList.docs.any((doc) => doc['userId'] == currentUser.uid);
+
+      // ถ้าผู้ใช้มีอยู่ใน userlist แล้วให้ไปที่ ChatGroupScreen
+      if (userExists) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatGroupScreen(
+              groupId: groupId,
+              currentUserId: currentUser.uid,
+            ),
+          ),
+        );
+        return;
+      }
+
+      // ตรวจสอบจำนวนสมาชิก
+      if (userList.docs.length < groupSize) {
+        // เพิ่มสมาชิก
+        await groupRef.collection('userlist').doc(currentUser.uid).set({
+          'userId': currentUser.uid,
+          'username': 'Your Username',
+        });
+
+        // นำทางไปยัง ChatGroupScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatGroupScreen(
+              groupId: groupId,
+              currentUserId: currentUser.uid,
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Group is full!')));
+      }
+    }
   }
 }

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:projectapp/constant.dart';
 
 class SettingScreen extends StatefulWidget {
   @override
@@ -23,30 +24,7 @@ class _SettingScreenState extends State<SettingScreen> {
     _loadUserData();
   }
 
-
-
   // Send verification email
-  Future<void> _sendVerificationEmail() async {
-    try {
-      User? currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null && !currentUser.emailVerified) {
-        await currentUser.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Verification email sent! Please check your inbox.')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Email is already verified.')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error sending verification email: $e')),
-      );
-    }
-  }
 
   Future<void> _loadUserData() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -118,49 +96,123 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.pink[100],
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: Text('Settings'),
-        backgroundColor: Colors.orange,
+        backgroundColor: AppTheme.appBarColor,
+        title: const Text('ตั้งค่าโปรไฟล์'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
         child: Column(
           children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _image != null
-                    ? FileImage(_image!) as ImageProvider<Object>
-                    : (_imageUrl != null
-                        ? NetworkImage(_imageUrl!) as ImageProvider<Object>
-                        : null),
-                backgroundColor: Colors.grey[300],
-                child: _image == null && _imageUrl == null
-                    ? Icon(Icons.camera_alt, size: 50)
-                    : null,
-              ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _fnameController,
-              decoration: InputDecoration(labelText: 'First Name'),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _lnameController,
-              decoration: InputDecoration(labelText: 'Last Name'),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _updateUserProfile,
-              child: Text('Save Changes'),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.pink[100]),
-            ),
+            const SizedBox(height: 32),
+            _buildProfileImage(),
+            const SizedBox(height: 32),
+            _buildProfileForm(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileImage() {
+    return Center(
+      child: Stack(
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppTheme.primaryColor,
+                width: 3,
+              ),
+            ),
+            child: ClipOval(
+              child: _image != null
+                  ? Image.file(_image!, fit: BoxFit.cover)
+                  : _imageUrl != null
+                      ? Image.network(_imageUrl!, fit: BoxFit.cover)
+                      : Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.person,
+                            size: 60,
+                            color: Colors.grey,
+                          ),
+                        ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  size: 20,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileForm() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
+      decoration: AppTheme.cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'ข้อมูลส่วนตัว',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimaryColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: _fnameController,
+            decoration: const InputDecoration(
+              labelText: 'ชื่อ',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _lnameController,
+            decoration: const InputDecoration(
+              labelText: 'นามสกุล',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: _updateUserProfile,
+            child: const Text('บันทึกการเปลี่ยนแปลง'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }

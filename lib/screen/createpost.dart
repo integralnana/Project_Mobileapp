@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:projectapp/constant.dart';
 import 'package:projectapp/model/groupchat.dart';
 import 'package:projectapp/screen/locationpicker.dart';
 import 'package:flutter/material.dart';
@@ -133,7 +134,7 @@ class _createpostScreenState extends State<createpostScreen> {
           groupSize: _groupSize,
           groupType: _groupType,
           groupDesc: _groupDesc.text,
-          createdAt: _selectedDateTime!,
+          setTime: _selectedDateTime!,
           latitude: _selectedLocation!.latitude,
           longitude: _selectedLocation!.longitude,
           userId: userId,
@@ -141,6 +142,12 @@ class _createpostScreenState extends State<createpostScreen> {
           groupStatus: '1');
 
       await docRef.set(newGroup.toJson());
+
+      await docRef.collection('userlist').doc(userId).set({
+        'userId': userId,
+        'username': username,
+      });
+      await docRef.collection('pending').doc(userId).set({});
 
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Group created successfully')));
@@ -152,159 +159,240 @@ class _createpostScreenState extends State<createpostScreen> {
   }
 
   Widget _buildForm() {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: _uploadImage,
-              child: _buildGroupImagePicker(),
-            ),
-            SizedBox(width: 16.0),
-            Expanded(child: _buildGroupDetailsForm())
-          ],
-        ),
-        SizedBox(height: 24.0),
-        _buildDateTimePicker(),
-        SizedBox(height: 24.0),
-        _buildLocationPicker(),
-        SizedBox(height: 24.0),
-        _buildCreateGroupButton(),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildImageSection(),
+          const SizedBox(height: 24),
+          _buildDetailsSection(),
+          const SizedBox(height: 24),
+          _buildDateTimeSection(),
+          const SizedBox(height: 24),
+          _buildLocationSection(),
+          const SizedBox(height: 32),
+          _buildSubmitButton(),
+        ],
+      ),
     );
   }
 
-  Widget _buildGroupImagePicker() {
-    return _groupImageUrl == null
-        ? Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(border: Border.all()),
-            child: Icon(Icons.add_a_photo, size: 50),
-          )
-        : Image.network(
-            _groupImageUrl!,
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-          );
+  Widget _buildImageSection() {
+    return GestureDetector(
+      onTap: _uploadImage,
+      child: Container(
+        width: double.infinity,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: _groupImageUrl == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.add_a_photo, size: 48, color: Colors.grey),
+                  SizedBox(height: 8),
+                  Text('เพิ่มรูปภาพ', style: TextStyle(color: Colors.grey)),
+                ],
+              )
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  _groupImageUrl!,
+                  fit: BoxFit.cover,
+                ),
+              ),
+      ),
+    );
   }
 
-  Widget _buildGroupDetailsForm() {
+  Widget _buildDetailsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
           controller: _groupNameController,
-          decoration: InputDecoration(labelText: 'หัวข้อ'),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter a group name';
-            }
-            return null;
-          },
-        ),
-        SizedBox(height: 16.0),
-        TextFormField(
-          controller: _groupDesc,
-          decoration: InputDecoration(labelText: 'รายละเอียด'),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter a group description';
-            }
-            return null;
-          },
-        ),
-        SizedBox(height: 16.0),
-        _buildGroupSizeDropdown(),
-        SizedBox(height: 16.0),
-        _buildGroupTypeDropdown(),
-      ],
-    );
-  }
-
-  Widget _buildGroupSizeDropdown() {
-    return DropdownButtonFormField<int>(
-      value: _groupSize,
-      decoration: InputDecoration(labelText: 'จำนวน'),
-      items: List.generate(9, (index) => index + 2).map((size) {
-        return DropdownMenuItem<int>(
-          value: size,
-          child: Text('$size คน'),
-        );
-      }).toList(),
-      onChanged: (value) {
-        setState(() {
-          _groupSize = value!;
-        });
-      },
-    );
-  }
-
-  Widget _buildGroupTypeDropdown() {
-    return DropdownButtonFormField<int>(
-      value: _groupType,
-      decoration: InputDecoration(labelText: 'ประเภทการจ่ายเงิน'),
-      items: [
-        DropdownMenuItem<int>(value: 1, child: Text('โอนก่อน')),
-        DropdownMenuItem<int>(value: 2, child: Text('จ่ายหลังนัดรับ')),
-      ],
-      onChanged: (value) {
-        setState(() {
-          _groupType = value!;
-        });
-      },
-    );
-  }
-
-  Widget _buildDateTimePicker() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            readOnly: true,
-            decoration: InputDecoration(
-              labelText: _selectedDateTime == null
-                  ? 'Select Date & Time'
-                  : _selectedDateTime!.toString(),
-            ),
-            onTap: () => _selectDateTime(context),
+          decoration: const InputDecoration(
+            labelText: 'หัวข้อ',
+            prefixIcon: Icon(Icons.title),
           ),
         ),
-        IconButton(
-          icon: Icon(Icons.calendar_today),
-          onPressed: () => _selectDateTime(context),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _groupDesc,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'รายละเอียด',
+            prefixIcon: Icon(Icons.description),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildDropdownField(
+                value: _groupSize,
+                label: 'จำนวน',
+                icon: Icons.group,
+                items: List.generate(9, (index) => index + 2)
+                    .map((size) => DropdownMenuItem(
+                          value: size,
+                          child: Text('$size คน'),
+                        ))
+                    .toList(),
+                onChanged: (value) => setState(() => _groupSize = value!),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildDropdownField(
+                value: _groupType,
+                label: 'การชำระเงิน',
+                icon: Icons.payment,
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('โอนก่อน')),
+                  DropdownMenuItem(value: 2, child: Text('จ่ายหลังนัดรับ')),
+                ],
+                onChanged: (value) => setState(() => _groupType = value!),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildLocationPicker() {
-    return ElevatedButton(
-      onPressed: _navigateAndPickLocation,
-      child: Text('เลือกสถานที่นัดรับ'),
+  Widget _buildDropdownField({
+    required dynamic value,
+    required String label,
+    required IconData icon,
+    required List<DropdownMenuItem> items,
+    required Function(dynamic) onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: DropdownButtonFormField(
+        value: value,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: InputBorder.none,
+        ),
+        items: items,
+        onChanged: onChanged,
+      ),
     );
   }
 
-  Widget _buildCreateGroupButton() {
+  Widget _buildDateTimeSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'วันและเวลานัดรับ',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    hintText: 'เลือกวันและเวลา',
+                    prefixIcon: Icon(Icons.calendar_today),
+                  ),
+                  onTap: () => _selectDateTime(context),
+                  controller: TextEditingController(
+                    text: _selectedDateTime?.toString() ?? '',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'สถานที่นัดรับ',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: _navigateAndPickLocation,
+            icon: const Icon(Icons.location_on),
+            label: const Text('เลือกสถานที่'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
     return ElevatedButton(
       onPressed: _createGroup,
-      child: Text('สร้างโพสต์'),
+      child: const Text('สร้างโพสต์'),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: Text('Create Group'),
+        backgroundColor: AppTheme.appBarColor,
+        title: const Text('สร้างโพสต์ใหม่'),
       ),
-      body: Form(
-        key: _formKey,
+      body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: _buildForm(),
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: _buildForm(),
+          ),
         ),
       ),
     );

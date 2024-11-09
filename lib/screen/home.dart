@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:projectapp/constant.dart';
 import 'package:projectapp/screen/Vip.dart';
 import 'package:projectapp/screen/login.dart';
 import 'package:projectapp/screen/profile.dart';
 import 'package:projectapp/screen/settings.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
+import 'package:projectapp/screen/showchat.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -51,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.pink[100],
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.orangeAccent,
+        backgroundColor: AppTheme.appBarColor,
         leading: IconButton(
           icon: const Icon(Icons.person),
           onPressed: () {
@@ -63,7 +65,12 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.chat),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ShowChatScreen()),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.notifications),
