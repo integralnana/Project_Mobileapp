@@ -14,10 +14,10 @@ class HexColor extends Color {
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF6B4EFF);
-    static const Color appBarColor = Colors.orangeAccent;
+  static Color appBarColor = HexColor("#FFA69E");
   static const Color secondaryColor = Color(0xFFFF4E8C);
-  static Color backgroundColor = HexColor("#F8BBD0");
-  static const Color cardColor = Colors.white;
+  static Color backgroundColor = HexColor("#C6D8D3");
+  static Color cardColor = HexColor("#EAF1EF");
   static const Color textPrimaryColor = Color(0xFF2D3142);
   static const Color textSecondaryColor = Color(0xFF9094A6);
 

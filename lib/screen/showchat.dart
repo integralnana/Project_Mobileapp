@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/constant.dart';
 import 'package:projectapp/model/groupchat.dart';
+import 'package:projectapp/screen/chatgroup.dart';
+import 'package:projectapp/screen/home.dart';
 
 class ShowChatScreen extends StatefulWidget {
   const ShowChatScreen({super.key});
@@ -16,18 +18,24 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String currentUserId = '';
-  List<GroupChat> groups = [];
-  List<GroupChat> filteredGroups = [];
+  List<GroupChatWithRequest> groups = [];
+  List<GroupChatWithRequest> filteredGroups = [];
   bool isLoading = true;
   String? errorMessage;
   String? selectedStatus;
-  bool isOldestFirst = false;
 
   final Map<String, String> statusMap = {
     "1": "กำลังยืนยันการแชร์",
     "2": "กำลังดำเนินการซื้อ",
     "3": "กำลังดำเนินการนัดรับ",
     "4": "นัดรับสำเร็จแล้ว",
+  };
+
+  final Map<String, String> requestStatusMap = {
+    "waiting": "กำลังขอเข้าร่วม",
+    "approved": "ยอมรับแล้ว",
+    "rejected": "ถูกปฏิเสธ",
+    "N/A": "ไม่มีคำขอ",
   };
 
   @override
@@ -37,25 +45,15 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
     fetchUserGroups();
   }
 
-  void filterAndSortGroups() {
+  void filterGroups() {
     setState(() {
-      filteredGroups = List<GroupChat>.from(groups);
+      filteredGroups = List<GroupChatWithRequest>.from(groups);
 
-      // กรองตามสถานะ
       if (selectedStatus != null) {
         filteredGroups = filteredGroups
-            .where((group) => group.groupStatus == selectedStatus)
+            .where((group) => group.group.groupStatus == selectedStatus)
             .toList();
       }
-
-      // เรียงตามวันที่
-      filteredGroups.sort((a, b) {
-        if (isOldestFirst) {
-          return a.setTime.compareTo(b.setTime);
-        } else {
-          return b.setTime.compareTo(a.setTime);
-        }
-      });
     });
   }
 
@@ -68,6 +66,24 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
     }
   }
 
+  Future<String> getRequestStatus(String groupId) async {
+    // เข้าถึงเอกสาร pending ของผู้ใช้ในกลุ่มที่กำหนด
+    DocumentSnapshot pendingSnapshot = await FirebaseFirestore.instance
+        .collection('groups')
+        .doc(groupId)
+        .collection('pending')
+        .doc(currentUserId)
+        .get();
+
+    // ตรวจสอบว่ามีเอกสารหรือไม่
+    if (pendingSnapshot.exists) {
+      // ดึงค่าของ request ถ้ามีเอกสาร
+      return pendingSnapshot['request'] ?? 'N/A';
+    } else {
+      return 'N/A'; // กรณีที่ไม่มีข้อมูล request
+    }
+  }
+
   Future<void> fetchUserGroups() async {
     try {
       setState(() {
@@ -76,7 +92,7 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
       });
 
       QuerySnapshot groupSnapshot = await _firestore.collection('groups').get();
-      List<GroupChat> newGroups = [];
+      List<GroupChatWithRequest> newGroups = [];
 
       for (var groupDoc in groupSnapshot.docs) {
         String groupId = groupDoc.id;
@@ -94,7 +110,12 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
 
           try {
             GroupChat group = GroupChat.fromJson(groupData);
-            newGroups.add(group);
+            String requestStatus = await getRequestStatus(groupId);
+
+            newGroups.add(GroupChatWithRequest(
+              group: group,
+              requestStatus: requestStatus,
+            ));
           } catch (e) {
             print("Error parsing group data: $e");
           }
@@ -105,7 +126,7 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
         groups = newGroups;
         isLoading = false;
       });
-      filterAndSortGroups();
+      filterGroups();
     } catch (e) {
       setState(() {
         isLoading = false;
@@ -130,6 +151,21 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
     }
   }
 
+  Color getRequestStatusColor(String status) {
+    switch (status) {
+      case "waiting":
+        return Colors.orange;
+      case "approved":
+        return Colors.green;
+      case "rejected":
+        return Colors.red;
+      case "N/A":
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,22 +178,24 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: fetchUserGroups,
-          ),
-        ],
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                  builder: (context) => HomeScreen()), // หน้าหลักของคุณ
+              (Route<dynamic> route) => false, // ลบ stack ของหน้าก่อนหน้า
+            );
+          },
+        ),
       ),
       body: Column(
         children: [
-          // Filter Section
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.grey,
+            color: AppTheme.appBarColor,
             child: Row(
               children: [
-                // Status Filter
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -190,38 +228,15 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                           setState(() {
                             selectedStatus = value;
                           });
-                          filterAndSortGroups();
+                          filterGroups();
                         },
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Sort Toggle
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isOldestFirst = !isOldestFirst;
-                    });
-                    filterAndSortGroups();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: Icon(
-                      isOldestFirst ? Icons.arrow_upward : Icons.arrow_downward,
-                      color: Colors.grey[600],
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          // List View
           Expanded(
             child: RefreshIndicator(
               onRefresh: fetchUserGroups,
@@ -274,7 +289,9 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                     padding: const EdgeInsets.all(8),
                     itemCount: filteredGroups.length,
                     itemBuilder: (context, index) {
-                      final group = filteredGroups[index];
+                      final groupWithRequest = filteredGroups[index];
+                      final group = groupWithRequest.group;
+
                       return Card(
                         elevation: 2,
                         margin: const EdgeInsets.symmetric(
@@ -287,7 +304,15 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () {
-                            // TODO: Navigate to chat detail screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatGroupScreen(
+                                  groupId: group.groupId,
+                                  currentUserId: currentUserId,
+                                ),
+                              ),
+                            );
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(16),
@@ -342,27 +367,68 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'ผู้โพสต์: ${group.username}',
+                                      'ผู้โพสต์: ${group.userId == currentUserId ? 'คุณ' : group.username}',
                                       style: GoogleFonts.anuphan(
                                         color: Colors.grey[600],
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Icon(
-                                      Icons.access_time,
-                                      size: 16,
-                                      color: Colors.grey[600],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      group.getThaiFormattedTime(),
-                                      style: GoogleFonts.anuphan(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
                                       ),
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      // เพิ่ม Expanded เพื่อควบคุมพื้นที่
+                                      child: Text(
+                                        'เวลานัดรับ: ${group.getThaiFormattedDate()}',
+                                        style: GoogleFonts.anuphan(
+                                          color: Colors.grey[600],
+                                        ),
+                                        overflow: TextOverflow
+                                            .ellipsis, // เพิ่ม ... เมื่อข้อความยาวเกิน
+                                        maxLines:
+                                            1, // จำกัดให้แสดงเพียงบรรทัดเดียว
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (groupWithRequest.requestStatus !=
+                                    'N/A') ...[
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: getRequestStatusColor(
+                                              groupWithRequest.requestStatus)
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: getRequestStatusColor(
+                                            groupWithRequest.requestStatus),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      requestStatusMap[
+                                              groupWithRequest.requestStatus] ??
+                                          'ไม่ทราบสถานะคำขอ',
+                                      style: GoogleFonts.anuphan(
+                                        color: getRequestStatusColor(
+                                            groupWithRequest.requestStatus),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -378,4 +444,14 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
       ),
     );
   }
+}
+
+class GroupChatWithRequest {
+  final GroupChat group;
+  final String requestStatus;
+
+  GroupChatWithRequest({
+    required this.group,
+    required this.requestStatus,
+  });
 }

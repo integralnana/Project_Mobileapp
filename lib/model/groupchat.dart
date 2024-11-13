@@ -14,8 +14,22 @@ class GroupChat {
   String groupStatus;
   String userId;
   String username;
+  String groupCate;
 
-  // เพิ่มรายการวันในภาษาไทย
+  static const List<String> categories = [
+    'อาหารและเครื่องดื่ม',
+    'เครื่องแต่งกาย',
+    'อิเล็กทรอนิกส์',
+    'หนังสือ',
+    'เครื่องเขียน',
+    'กีฬา',
+    'เครื่องใช้ในบ้าน',
+    'แฟชั่น',
+    'เครื่องสำอาง',
+    'สุขภาพ',
+    'บริการอื่นๆ'
+  ];
+
   static const List<String> thaiDays = [
     'วันอาทิตย์',
     'วันจันทร์',
@@ -26,7 +40,6 @@ class GroupChat {
     'วันเสาร์'
   ];
 
-  // เพิ่มรายการเดือนในภาษาไทย
   static const List<String> thaiMonths = [
     'มกราคม',
     'กุมภาพันธ์',
@@ -55,9 +68,11 @@ class GroupChat {
     required this.groupStatus,
     required this.userId,
     required this.username,
+    required this.groupCate,
   });
 
-  // เพิ่มเมธอดสำหรับแปลงวันที่เป็นภาษาไทย
+  get userlist => null;
+
   String getThaiFormattedDate() {
     String thaiDay = thaiDays[setTime.weekday % 7];
     String thaiMonth = thaiMonths[setTime.month - 1];
@@ -67,7 +82,6 @@ class GroupChat {
     return '$thaiDay ${setTime.day} $thaiMonth $thaiYear $time น.';
   }
 
-  // เพิ่มเมธอดสำหรับแปลงเฉพาะเวลา
   String getThaiFormattedTime() {
     return DateFormat('HH:mm').format(setTime) + ' น.';
   }
@@ -86,6 +100,7 @@ class GroupChat {
       'groupStatus': groupStatus,
       'userId': userId,
       'username': username,
+      'groupCate': groupCate,
     };
   }
 
@@ -108,10 +123,10 @@ class GroupChat {
         longitude: (json['longitude'] as num).toDouble(),
         userId: json['userId'].toString(),
         username: json['username'].toString(),
+        groupCate: json['groupCate'].toString(),
         groupStatus: json['groupStatus'].toString());
   }
 
-  // เพิ่มเมธอดสแตติกสำหรับแปลงวันที่จาก Timestamp หรือ DateTime
   static String formatThaiDateTime(dynamic timestamp) {
     if (timestamp == null) return 'ไม่สามารถแสดงเวลาได้';
 

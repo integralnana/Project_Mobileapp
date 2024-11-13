@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/constant.dart';
 import 'package:projectapp/screen/Vip.dart';
 import 'package:projectapp/screen/login.dart';
+import 'package:projectapp/screen/notification.dart';
 import 'package:projectapp/screen/profile.dart';
 import 'package:projectapp/screen/settings.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
@@ -74,7 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotiScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -86,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 225,
               child: DrawerHeader(
                 decoration: BoxDecoration(
-                  color: Colors.orangeAccent,
+                  color: AppTheme.appBarColor,
                 ),
                 child: Column(
                   children: [
