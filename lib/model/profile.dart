@@ -9,7 +9,7 @@ class Profile {
   String fname;
   String lname;
   String username;
-  String point;
+  num point;
   String status;
 
   Profile(
@@ -34,7 +34,7 @@ class Profile {
       'lname': lname,
       'point': point,
       'username': username,
-      'status' : status
+      'status': status
     };
   }
 

@@ -9,6 +9,7 @@ import 'package:projectapp/screen/notification.dart';
 import 'package:projectapp/screen/profile.dart';
 import 'package:projectapp/screen/settings.dart';
 import 'package:projectapp/screen/sharing_screen.dart';
+import 'package:projectapp/screen/sharingdisc_screen.dart';
 import 'package:projectapp/screen/showchat.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -133,7 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => ProfileScreen(
+                          userId: FirebaseAuth.instance.currentUser!.uid)),
                 );
               },
             ),
@@ -224,7 +227,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => SharingDiscScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   minimumSize: const Size(200, 50),

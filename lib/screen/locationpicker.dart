@@ -33,7 +33,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       ),
       body: GoogleMap(
         initialCameraPosition: CameraPosition(
-          target: LatLng(13.7563, 100.5018), // พิกัดเริ่มต้น (กรุงเทพฯ)
+          target: LatLng(13.7563, 100.5018),
           zoom: 12,
         ),
         onTap: _selectLocation,

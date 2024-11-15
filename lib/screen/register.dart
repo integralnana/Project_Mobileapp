@@ -33,6 +33,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
     }
   }
+  
 
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -82,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             lname: _lnameController.text,
             imageUrl: imageUrl,
             username: _usernameController.text,
-            point: '',
+            point: 0,
             status: '1',
           );
 
@@ -113,6 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {

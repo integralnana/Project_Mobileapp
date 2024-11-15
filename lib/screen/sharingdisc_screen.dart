@@ -7,15 +7,15 @@ import 'package:projectapp/constant.dart';
 import 'package:projectapp/model/groupchat.dart';
 import 'package:projectapp/screen/chatgroup.dart';
 import 'package:projectapp/screen/countdown.dart';
-import 'package:projectapp/screen/createpost.dart';
+import 'package:projectapp/screen/createdisc.dart';
 import 'package:projectapp/screen/profile.dart';
 
-class SharingScreen extends StatefulWidget {
+class SharingDiscScreen extends StatefulWidget {
   @override
-  State<SharingScreen> createState() => _SharingScreenState();
+  State<SharingDiscScreen> createState() => _SharingDiscScreenState();
 }
 
-class _SharingScreenState extends State<SharingScreen> {
+class _SharingDiscScreenState extends State<SharingDiscScreen> {
   final currentUser = FirebaseAuth.instance.currentUser;
 
   String? selectedCategory;
@@ -25,7 +25,7 @@ class _SharingScreenState extends State<SharingScreen> {
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('groups')
         .where('groupStatus', whereNotIn: [2, 3, 4])
-        .where('groupGenre', isEqualTo: 1)
+        .where('groupGenre', isEqualTo: 2)
         .orderBy('setTime');
 
     if (selectedCategory != null) {
@@ -68,7 +68,7 @@ class _SharingScreenState extends State<SharingScreen> {
 
   Widget buildFilterDropdowns() {
     return Container(
-      color: AppTheme.appBarColor,
+      color: AppTheme.appDiscColor,
       padding: EdgeInsets.all(16.0),
       child: Container(
         child: Row(
@@ -168,20 +168,20 @@ class _SharingScreenState extends State<SharingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: AppTheme.backDiscColor,
       appBar: AppBar(
         title: Text(
-          'หน้าแชร์ซื้อสินค้า',
+          'รายการสินค้าลดราคา',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppTheme.appBarColor,
+        backgroundColor: AppTheme.appDiscColor,
         actions: [
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreatePostScreen()),
+                MaterialPageRoute(builder: (context) => CreateDiscScreen()),
               );
             },
           ),
@@ -218,7 +218,7 @@ class _SharingScreenState extends State<SharingScreen> {
                 }
 
                 return ListView(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(8.0),
                   children: snapshot.data!.docs.map((doc) {
                     var data = doc.data() as Map<String, dynamic>;
                     return FutureBuilder<List<dynamic>>(
@@ -265,7 +265,6 @@ class _SharingScreenState extends State<SharingScreen> {
     String groupName = data['groupName'] ?? 'ชื่อกลุ่ม';
     String groupImage = data['groupImage'] ?? '';
     int groupSize = data['groupSize'] ?? 2;
-    String groupDesc = data['groupDesc'] ?? 'ไม่มีคำอธิบาย';
     String username = data['username'] ?? 'Unknown User';
     double latitude = data['latitude'] ?? 0.0;
     double longitude = data['longitude'] ?? 0.0;
@@ -296,28 +295,22 @@ class _SharingScreenState extends State<SharingScreen> {
         );
       },
       child: Card(
-        color: AppTheme.cardColor,
+        color: AppTheme.cardDiscColor,
         margin: EdgeInsets.only(bottom: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
-              leading: GestureDetector(
-                onTap: () => _navigateToProfileScreen(data['userId']),
-                child: CircleAvatar(
+                leading: CircleAvatar(
                   backgroundImage: profileImageUrl != null
                       ? NetworkImage(profileImageUrl)
                       : AssetImage('assets/images/default_user_image.png')
                           as ImageProvider,
                   radius: 20,
                 ),
-              ),
-              title: GestureDetector(
-                  onTap: () => _navigateToProfileScreen(data['userId']),
-                  child: Text(username,
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-              subtitle: Text(formattedDateTime),
-            ),
+                title: Text(username,
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: CountdownTimer(setTime: data['setTime'])),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -404,79 +397,23 @@ class _SharingScreenState extends State<SharingScreen> {
                       _showLocationDialog(context, latitude, longitude);
                     },
                     icon: Icon(Icons.location_on, size: 18),
-                    label: Text('ดูสถานที่นัดรับ',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
+                    label: Text(
+                      'ดูสถานที่นัดรับ',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   ),
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('groups')
-                        .doc(groupId)
-                        .collection('userlist')
-                        .doc(currentUser?.uid)
-                        .snapshots(),
-                    builder: (context, userSnapshot) {
-                      if (userSnapshot.hasData && userSnapshot.data!.exists) {
-                        return ElevatedButton(
-                          onPressed: () => _joinGroup(context, groupId),
-                          child: Text('เข้าร่วมแชร์',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue),
-                        );
-                      } else {
-                        return StreamBuilder<DocumentSnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('groups')
-                              .doc(groupId)
-                              .collection('pending')
-                              .doc(currentUser?.uid)
-                              .snapshots(),
-                          builder: (context, pendingSnapshot) {
-                            if (pendingSnapshot.hasData &&
-                                pendingSnapshot.data!.exists) {
-                              var pendingStatus =
-                                  pendingSnapshot.data!['request'];
-                              if (pendingStatus == 'rejected') {
-                                return ElevatedButton(
-                                  onPressed: () => _joinGroup(context, groupId),
-                                  child: Text('ขอเข้าร่วม',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                );
-                              } else {
-                                return ElevatedButton(
-                                  onPressed: null,
-                                  child: Text('รอการตอบรับ',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.grey,
-                                  ),
-                                );
-                              }
-                            } else {
-                              return ElevatedButton(
-                                onPressed: () => _joinGroup(context, groupId),
-                                child: Text('ขอเข้าร่วม',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange[400],
-                                ),
-                              );
-                            }
-                          },
-                        );
-                      }
-                    },
+                  ElevatedButton(
+                    onPressed: () => _joinGroup(context, groupId),
+                    child: Text(
+                      'เข้าร่วมแชร์',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                   ),
                 ],
               ),
@@ -543,18 +480,13 @@ class _SharingScreenState extends State<SharingScreen> {
       var data = groupDoc.data() as Map<String, dynamic>;
       int groupSize = data['groupSize'];
 
-      // ตรวจสอบสมาชิกที่มีอยู่ใน userlist
+      // Fetch the current members in the group
       QuerySnapshot userList = await groupRef.collection('userlist').get();
-      bool userExists =
-          userList.docs.any((doc) => doc['userId'] == currentUser.uid);
 
-      // ตรวจสอบว่าผู้ใช้มีคำขอที่รออยู่หรือไม่
-      DocumentSnapshot pendingDoc =
-          await groupRef.collection('pending').doc(currentUser.uid).get();
-      bool hasPendingRequest = pendingDoc.exists;
+      bool isUserInGroup =
+          userList.docs.any((doc) => doc.id == currentUser.uid);
 
-      // ถ้าเป็นสมาชิกแล้ว ให้ไปที่หน้าแชท
-      if (userExists) {
+      if (isUserInGroup) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -567,7 +499,7 @@ class _SharingScreenState extends State<SharingScreen> {
         return;
       }
 
-      // ตรวจสอบจำนวนสมาชิกในกลุ่ม
+      // Check if there is available space in the group
       if (userList.docs.length >= groupSize) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('กลุ่มเต็มแล้ว')),
@@ -575,28 +507,32 @@ class _SharingScreenState extends State<SharingScreen> {
         return;
       }
 
-      // กรณีที่ยังไม่เคยส่งคำขอ หรือเคยถูกปฏิเสธ
-      if (!hasPendingRequest ||
-          (pendingDoc.exists && pendingDoc.get('request') == 'rejected')) {
-        await groupRef.collection('pending').doc(currentUser.uid).set({
-          'userId': currentUser.uid,
-          'request': 'waiting',
-          'timestamp': FieldValue.serverTimestamp(),
-        });
+      await groupRef.collection('userlist').doc(currentUser.uid).set({
+        'userId': currentUser.uid,
+        'joinedAt': FieldValue.serverTimestamp(),
+      });
 
-        String message = !hasPendingRequest
-            ? 'ส่งคำขอเข้าร่วมแล้ว กรุณารอการตอบรับ'
-            : 'ส่งคำขอเข้าร่วมใหม่แล้ว กรุณารอการตอบรับ';
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      String username = userSnapshot['username'];
+      await groupRef.collection('messages').add({
+        'type': 'notification',
+        'text': '$username ได้เข้าร่วมกลุ่มแล้ว',
+        'senderId': 'server',
+        'setTime': FieldValue.serverTimestamp(),
+      });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      } else {
-        // กรณีที่มีคำขอที่รออยู่แล้ว
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('คุณมีคำขอที่รออยู่แล้ว กรุณารอการตอบรับ')),
-        );
-      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatGroupScreen(
+            groupId: groupId,
+            currentUserId: currentUser.uid,
+          ),
+        ),
+      );
     }
   }
 
@@ -620,7 +556,7 @@ class _SharingScreenState extends State<SharingScreen> {
           builder: (context, scrollController) {
             return Container(
               decoration: BoxDecoration(
-                color: AppTheme.cardColor,
+                color: AppTheme.cardDiscColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
@@ -670,9 +606,8 @@ class _SharingScreenState extends State<SharingScreen> {
                                           ),
                                         ),
                                         SizedBox(height: 4),
-                                        Icon(Icons.calendar_month),
-                                        SizedBox(width: 4),
-                                        Text(formattedDateTime),
+                                        CountdownTimer(
+                                            setTime: data['setTime']),
                                       ],
                                     ),
                                   ),
@@ -808,94 +743,16 @@ class _SharingScreenState extends State<SharingScreen> {
                                       style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.red),
                                     ),
-                                    StreamBuilder<DocumentSnapshot>(
-                                      stream: FirebaseFirestore.instance
-                                          .collection('groups')
-                                          .doc(groupId)
-                                          .collection('userlist')
-                                          .doc(currentUser?.uid)
-                                          .snapshots(),
-                                      builder: (context, userSnapshot) {
-                                        if (userSnapshot.hasData &&
-                                            userSnapshot.data!.exists) {
-                                          return ElevatedButton(
-                                            onPressed: () =>
-                                                _joinGroup(context, groupId),
-                                            child: Text('เข้าร่วมแชร์',
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.blue),
-                                          );
-                                        } else {
-                                          return StreamBuilder<
-                                              DocumentSnapshot>(
-                                            stream: FirebaseFirestore.instance
-                                                .collection('groups')
-                                                .doc(groupId)
-                                                .collection('pending')
-                                                .doc(currentUser?.uid)
-                                                .snapshots(),
-                                            builder:
-                                                (context, pendingSnapshot) {
-                                              if (pendingSnapshot.hasData &&
-                                                  pendingSnapshot
-                                                      .data!.exists) {
-                                                var pendingStatus =
-                                                    pendingSnapshot
-                                                        .data!['request'];
-                                                if (pendingStatus ==
-                                                    'rejected') {
-                                                  return ElevatedButton(
-                                                    onPressed: () => _joinGroup(
-                                                        context, groupId),
-                                                    child: Text('ขอเข้าร่วม',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      backgroundColor:
-                                                          Colors.orange,
-                                                    ),
-                                                  );
-                                                } else {
-                                                  return ElevatedButton(
-                                                    onPressed: null,
-                                                    child: Text('รอการตอบรับ',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)),
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      backgroundColor:
-                                                          Colors.grey,
-                                                    ),
-                                                  );
-                                                }
-                                              } else {
-                                                return ElevatedButton(
-                                                  onPressed: () => _joinGroup(
-                                                      context, groupId),
-                                                  child: Text('ขอเข้าร่วม',
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.orange[400],
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                          );
-                                        }
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        _joinGroup(context, groupId);
                                       },
+                                      child: Text('เข้าร่วมแชร์',
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold)),
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blue[400]),
                                     ),
                                   ],
                                 ),

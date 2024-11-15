@@ -24,6 +24,8 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
   String? errorMessage;
   String? selectedStatus;
 
+  final Set<String> initialVisibleStatuses = {'1', '2', '3'};
+
   final Map<String, String> statusMap = {
     "1": "กำลังยืนยันการแชร์",
     "2": "กำลังดำเนินการซื้อ",
@@ -52,6 +54,13 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
       if (selectedStatus != null) {
         filteredGroups = filteredGroups
             .where((group) => group.group.groupStatus == selectedStatus)
+            .toList();
+      } else {
+        // On initial load or when "show all" is selected,
+        // show only groups with status 1, 2, or 3
+        filteredGroups = groups
+            .where((group) =>
+                initialVisibleStatuses.contains(group.group.groupStatus))
             .toList();
       }
     });
@@ -215,7 +224,7 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                         items: [
                           const DropdownMenuItem<String>(
                             value: null,
-                            child: Text('แสดงทั้งหมด'),
+                            child: Text('สถานะกลุ่ม : แสดงทั้งหมด'),
                           ),
                           ...statusMap.entries.map((entry) {
                             return DropdownMenuItem<String>(

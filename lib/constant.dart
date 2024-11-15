@@ -20,6 +20,10 @@ class AppTheme {
   static Color cardColor = HexColor("#EAF1EF");
   static const Color textPrimaryColor = Color(0xFF2D3142);
   static const Color textSecondaryColor = Color(0xFF9094A6);
+  static Color buttonColor = HexColor("#89023E");
+  static Color appDiscColor = HexColor("#65D3FF");
+  static Color backDiscColor = HexColor("#B6ABB2");
+  static Color cardDiscColor = HexColor("#EEE0CB");
 
   static BoxDecoration cardDecoration = BoxDecoration(
     color: cardColor,

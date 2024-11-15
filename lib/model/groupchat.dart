@@ -15,6 +15,7 @@ class GroupChat {
   String userId;
   String username;
   String groupCate;
+  int groupGenre;
 
   static const List<String> categories = [
     'อาหารและเครื่องดื่ม',
@@ -69,6 +70,7 @@ class GroupChat {
     required this.userId,
     required this.username,
     required this.groupCate,
+    required this.groupGenre,
   });
 
   get userlist => null;
@@ -101,6 +103,7 @@ class GroupChat {
       'userId': userId,
       'username': username,
       'groupCate': groupCate,
+      'groupGenre': groupGenre
     };
   }
 
@@ -115,6 +118,9 @@ class GroupChat {
             : json['groupSize'] as int,
         groupType: json['groupType'] is String
             ? int.parse(json['groupType'])
+            : json['groupType'] as int,
+        groupGenre: json['groupGenre'] is String
+            ? int.parse(json['groupGenre'])
             : json['groupType'] as int,
         setTime: json['setTime'] is String
             ? DateTime.parse(json['setTime'])

@@ -9,12 +9,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class CreatePostScreen extends StatefulWidget {
+class CreateDiscScreen extends StatefulWidget {
   @override
-  _CreatePostScreenState createState() => _CreatePostScreenState();
+  _CreateDiscScreenState createState() => _CreateDiscScreenState();
 }
 
-class _CreatePostScreenState extends State<CreatePostScreen> {
+class _CreateDiscScreenState extends State<CreateDiscScreen> {
   final _formKey = GlobalKey<FormState>();
   final _groupNameController = TextEditingController();
   final _groupDesc = TextEditingController();
@@ -111,7 +111,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       username: username,
       groupStatus: '1',
       groupCate: _selectedCategory,
-      groupGenre: 1,
+      groupGenre: 2,
     );
 
     await groupRef.set(group.toJson());
@@ -208,27 +208,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Flexible(
-                      flex: 1,
-                      child: DropdownButtonFormField(
-                        value: _groupSize,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'จำนวน',
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                          prefixIcon: Icon(Icons.group),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: List.generate(9, (i) => i + 2)
-                            .map((size) => DropdownMenuItem(
-                                  value: size,
-                                  child: Text('$size คน'),
-                                ))
-                            .toList(),
-                        onChanged: (v) => setState(() => _groupSize = v as int),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
                     Flexible(
                       flex: 1,
                       child: DropdownButtonFormField(

@@ -124,7 +124,7 @@ class _SettingScreenState extends State<SettingScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppTheme.primaryColor,
+                color: AppTheme.buttonColor,
                 width: 3,
               ),
             ),
@@ -151,7 +151,7 @@ class _SettingScreenState extends State<SettingScreen> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.buttonColor,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Colors.white,
