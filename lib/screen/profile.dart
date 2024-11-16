@@ -39,10 +39,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .get();
 
       if (userDoc.exists) {
+        // Query reviews from the top-level reviews collection
         QuerySnapshot reviewsSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.userId)
             .collection('reviews')
+            .where('userId', isEqualTo: widget.userId)
             .get();
 
         setState(() {
@@ -55,6 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               reviewsSnapshot.size > 0 ? _point / reviewsSnapshot.size : 0.0;
         });
       }
+      print(_point);
     } catch (e) {
       print('Error fetching user data: $e');
     }
@@ -79,7 +80,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReportScreen(userId: widget.userId),
+                    builder: (context) => ReportScreen(
+                      userId: FirebaseAuth.instance.currentUser!.uid,
+                      reportToId: widget.userId,
+                    ),
                   ),
                 );
               },
@@ -169,9 +173,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildReviewList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
           .collection('reviews')
+          .where('userId', isEqualTo: widget.userId)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
@@ -186,12 +189,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: snapshot.data?.docs.length,
-                itemBuilder: (context, index) =>
-                    _buildReviewItem(snapshot.data!.docs[index]),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: snapshot.data?.docs.length,
+                  itemBuilder: (context, index) =>
+                      _buildReviewItem(snapshot.data!.docs[index]),
+                ),
               ),
             ],
           );
@@ -212,7 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
           .collection('users')
-          .doc(reviewDoc['userId'])
+          .doc(reviewDoc['reviewerId'])
           .get(),
       builder: (context, userSnapshot) {
         if (userSnapshot.hasData) {
@@ -226,11 +229,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundImage: NetworkImage(userSnapshot.data!['imageUrl']),
                 radius: 30,
               ),
-              title: Text(
-                userSnapshot.data!['username'],
-                style: GoogleFonts.anuphan(
-                  fontWeight: FontWeight.bold,
-                ),
+              title: Row(
+                children: [
+                  Text(
+                    userSnapshot.data!['username'],
+                    style: GoogleFonts.anuphan(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,6 +250,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontSize: 14,
                       color: Colors.grey[700],
                     ),
+                  ),
+                  FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('groups')
+                        .doc(reviewDoc['groupId'])
+                        .get(),
+                    builder: (context, groupSnapshot) {
+                      if (groupSnapshot.hasData && groupSnapshot.data!.exists) {
+                        return Text(
+                          'กลุ่ม: ${groupSnapshot.data!['groupName']}',
+                          style: GoogleFonts.anuphan(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        );
+                      }
+                      return SizedBox.shrink();
+                    },
                   ),
                 ],
               ),
@@ -355,7 +380,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               SizedBox(height: 8),
-              ...groupItems,
+              Expanded(
+                child: ListView(
+                  children: groupItems,
+                ),
+              ),
             ],
           );
         } else if (snapshot.hasError) {

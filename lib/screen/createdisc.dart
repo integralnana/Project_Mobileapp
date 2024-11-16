@@ -271,9 +271,9 @@ class _CreateDiscScreenState extends State<CreateDiscScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppTheme.backgroundColor,
+        backgroundColor: AppTheme.backDiscColor,
         appBar: AppBar(
-          backgroundColor: AppTheme.appBarColor,
+          backgroundColor: AppTheme.appDiscColor,
           title: const Text('สร้างโพสต์ใหม่'),
         ),
         body: SingleChildScrollView(

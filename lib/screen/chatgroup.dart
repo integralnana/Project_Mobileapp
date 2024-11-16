@@ -175,15 +175,21 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
   Future<void> _showReviewDialog(String userId) async {
     if (userId == widget.currentUserId) return;
 
+    // เปลี่ยนการตรวจสอบจาก subcollection เป็น collection reviews
     final reviewDoc = await FirebaseFirestore.instance
-        .collection('users/${userId}/reviews')
-        .where('userId', isEqualTo: widget.currentUserId)
+        .collection('reviews')
+        .where('reviewerId', isEqualTo: widget.currentUserId)
+        .where('userId',
+            isEqualTo:
+                userId) // เพิ่ม userId เพื่อตรวจสอบว่าเคยรีวิวคนนี้หรือยัง
+        .where('groupId', isEqualTo: widget.groupId)
         .get();
 
     if (reviewDoc.docs.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text('คุณได้รีวิวผู้ใช้นี้ไปแล้ว', style: GoogleFonts.anuphan()),
+        content: Text(
+          'คุณได้รีวิวผู้ใช้นี้ในกลุ่มนี้แล้ว',
+        ),
         backgroundColor: Colors.orange,
       ));
       return;
@@ -211,8 +217,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                   'username': userData['username'] ?? 'ไม่มีชื่อผู้ใช้',
                   'imageUrl': userData['imageUrl'] ?? '',
                   'fullName':
-                      '${userData['fname'] ?? ''} ${userData['lname'] ?? ''}'
-                          .trim(),
+                      '${userData['fname'] ?? ''} ${userData['lname'] ?? ''}',
                 }),
                 const SizedBox(height: 20),
                 Text('ให้คะแนนสมาชิก',
@@ -261,6 +266,51 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
     );
   }
 
+  Widget _buildStarRating(int selectedStar, Function(int) onRatingSelected) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        5,
+        (index) => IconButton(
+          icon: Icon(
+            index < selectedStar ? Icons.star : Icons.star_border,
+            color: Colors.amber,
+            size: 32,
+          ),
+          onPressed: () => onRatingSelected(index + 1),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitReview(String userId, int star, String comment) async {
+    try {
+      // อัพเดทคะแนนของผู้ใช้
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({'point': FieldValue.increment(star)});
+
+      // เพิ่มรีวิวใน collection reviews
+      await FirebaseFirestore.instance.collection('reviews').add({
+        'userId': userId, // ผู้ถูกรีวิว
+        'reviewerId': widget.currentUserId, // ผู้รีวิว
+        'groupId': widget.groupId, // กลุ่มที่เกี่ยวข้อง
+        'star': star,
+        'comment': comment,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('รีวิวสมาชิกเรียบร้อยแล้ว')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('เกิดข้อผิดพลาด: ${e.toString()}'),
+        backgroundColor: Colors.red,
+      ));
+    }
+  }
+
   Widget _buildUserProfile(Map<String, dynamic> userInfo) {
     return Container(
       padding: const EdgeInsets.all(8),
@@ -299,43 +349,6 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildStarRating(int selectedStar, Function(int) onRatingSelected) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        5,
-        (index) => IconButton(
-          icon: Icon(
-            index < selectedStar ? Icons.star : Icons.star_border,
-            color: Colors.amber,
-            size: 32,
-          ),
-          onPressed: () => onRatingSelected(index + 1),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _submitReview(String userId, int star, String comment) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .update({'point': FieldValue.increment(star)});
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('reviews')
-        .doc(widget.currentUserId)
-        .set({
-      'star': star,
-      'userId': widget.currentUserId,
-      'comment': comment,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('รีวิวสมาชิกเรียบร้อยแล้ว')));
   }
 
   Future<void> _kickMember(String userId) async {

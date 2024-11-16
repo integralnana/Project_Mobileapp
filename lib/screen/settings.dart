@@ -12,8 +12,7 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  final _fnameController = TextEditingController();
-  final _lnameController = TextEditingController();
+  final _usernameController = TextEditingController();
   File? _image;
   String? _imageUrl;
   String? _userId; // Store the logged-in user's ID
@@ -39,8 +38,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
       if (userDoc.exists) {
         setState(() {
-          _fnameController.text = userDoc['fname'];
-          _lnameController.text = userDoc['lname'];
+          _usernameController.text = userDoc['username'];
           _imageUrl = userDoc['imageUrl'];
         });
       }
@@ -78,8 +76,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
       // อัปเดตข้อมูลผู้ใช้ใน Firestore รวมถึง imageUrl ถ้ามีการเปลี่ยนแปลง
       await FirebaseFirestore.instance.collection('users').doc(_userId).update({
-        'fname': _fnameController.text,
-        'lname': _lnameController.text,
+        'username': _usernameController.text,
         'imageUrl': _imageUrl, // อัปเดต URL ของรูปภาพ
       });
 
@@ -180,7 +177,7 @@ class _SettingScreenState extends State<SettingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'ข้อมูลส่วนตัว',
+            'เปลี่ยน username',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -189,20 +186,13 @@ class _SettingScreenState extends State<SettingScreen> {
           ),
           const SizedBox(height: 24),
           TextFormField(
-            controller: _fnameController,
+            controller: _usernameController,
             decoration: const InputDecoration(
-              labelText: 'ชื่อ',
+              labelText: 'username',
               prefixIcon: Icon(Icons.person_outline),
             ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _lnameController,
-            decoration: const InputDecoration(
-              labelText: 'นามสกุล',
-              prefixIcon: Icon(Icons.person_outline),
-            ),
-          ),
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: _updateUserProfile,

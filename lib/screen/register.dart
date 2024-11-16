@@ -18,7 +18,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _fnameController = TextEditingController();
   final _lnameController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -33,7 +32,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
     }
   }
-  
 
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -78,7 +76,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Profile newUser = Profile(
             userId: userCredential.user!.uid, // ใช้ userId แทน username
             email: _emailController.text,
-            phone: _phoneController.text,
             fname: _fnameController.text,
             lname: _lnameController.text,
             imageUrl: imageUrl,
@@ -114,7 +111,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -257,27 +253,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     keyboardType: TextInputType.name,
                     decoration: InputDecoration(
                       hintText: 'กรุณากรอกนามสกุล',
-                      hintStyle: GoogleFonts.anuphan(),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("เบอร์โทร", style: GoogleFonts.anuphan()),
-                  ),
-                  TextFormField(
-                    validator:
-                        RequiredValidator(errorText: "กรุณากรอกเบอร์โทร"),
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      hintText: 'กรุณากรอกเบอร์โทร',
                       hintStyle: GoogleFonts.anuphan(),
                       filled: true,
                       fillColor: Colors.white,

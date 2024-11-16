@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/constant.dart';
@@ -31,13 +32,6 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
     "2": "กำลังดำเนินการซื้อ",
     "3": "กำลังดำเนินการนัดรับ",
     "4": "นัดรับสำเร็จแล้ว",
-  };
-
-  final Map<String, String> requestStatusMap = {
-    "waiting": "กำลังขอเข้าร่วม",
-    "approved": "ยอมรับแล้ว",
-    "rejected": "ถูกปฏิเสธ",
-    "N/A": "ไม่มีคำขอ",
   };
 
   @override
@@ -155,21 +149,6 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
         return Colors.purple;
       case "4":
         return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color getRequestStatusColor(String status) {
-    switch (status) {
-      case "waiting":
-        return Colors.orange;
-      case "approved":
-        return Colors.green;
-      case "rejected":
-        return Colors.red;
-      case "N/A":
-        return Colors.grey;
       default:
         return Colors.grey;
     }
@@ -301,7 +280,28 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                       final groupWithRequest = filteredGroups[index];
                       final group = groupWithRequest.group;
 
+                      String groupStatusText;
+                      if (group.groupGenre == 1) {
+                        groupStatusText = "แชร์ซื้อสินค้า";
+                      } else if (group.groupGenre == 2) {
+                        groupStatusText = "สินค้าลดราคา";
+                      } else {
+                        groupStatusText = "ไม่ทราบสถานะ";
+                      }
+
+                      Color getRequestStatusColor(String groupStatusText) {
+                        switch (groupStatusText) {
+                          case '1':
+                            return AppTheme.cardColor;
+                          case '2':
+                            return AppTheme.cardDiscColor;
+                          default:
+                            return Colors.white;
+                        }
+                      }
+
                       return Card(
+                        color: getRequestStatusColor(groupStatusText),
                         elevation: 2,
                         margin: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -375,10 +375,29 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                                       color: Colors.grey,
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      'ผู้โพสต์: ${group.userId == currentUserId ? 'คุณ' : group.username}',
-                                      style: GoogleFonts.anuphan(
-                                        color: Colors.grey[600],
+                                    Expanded(
+                                      child: Text(
+                                        'ผู้โพสต์: ${group.userId == currentUserId ? 'คุณ' : group.username}',
+                                        style: GoogleFonts.anuphan(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(),
+                                      ),
+                                      child: Text(
+                                        groupStatusText,
+                                        style: GoogleFonts.anuphan(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -407,37 +426,6 @@ class _ShowChatScreenState extends State<ShowChatScreen> {
                                     ),
                                   ],
                                 ),
-                                if (groupWithRequest.requestStatus !=
-                                    'N/A') ...[
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: getRequestStatusColor(
-                                              groupWithRequest.requestStatus)
-                                          .withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: getRequestStatusColor(
-                                            groupWithRequest.requestStatus),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      requestStatusMap[
-                                              groupWithRequest.requestStatus] ??
-                                          'ไม่ทราบสถานะคำขอ',
-                                      style: GoogleFonts.anuphan(
-                                        color: getRequestStatusColor(
-                                            groupWithRequest.requestStatus),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),

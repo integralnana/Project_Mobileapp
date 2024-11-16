@@ -22,6 +22,8 @@ class _SharingScreenState extends State<SharingScreen> {
   int? selectedPaymentType;
 
   Query<Map<String, dynamic>> buildQuery() {
+    DateTime now = DateTime.now();
+    Timestamp currentTimestamp = Timestamp.fromDate(now);
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('groups')
         .where('groupStatus', whereNotIn: [2, 3, 4])

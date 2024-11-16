@@ -9,11 +9,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart' as path;
 
 class ReportScreen extends StatefulWidget {
-  final String userId;
+  final String reportToId; // เปลี่ยนชื่อ parameter จาก userId เป็น reportToId
 
   const ReportScreen({
     Key? key,
-    required this.userId,
+    required this.reportToId,
+    required String userId,
   }) : super(key: key);
 
   @override
@@ -62,18 +63,14 @@ class _ReportScreenState extends State<ReportScreen> {
     if (_image == null) return null;
 
     try {
-      // สร้างชื่อไฟล์ที่ไม่ซ้ำกัน
       String fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${path.basename(_image!.path)}';
 
-      // อ้างอิงไปยัง Firebase Storage
       final storageRef =
           FirebaseStorage.instance.ref().child('reportImages').child(fileName);
 
-      // อัพโหลดไฟล์
       await storageRef.putFile(_image!);
 
-      // รับ URL ของรูปภาพ
       final imageUrl = await storageRef.getDownloadURL();
       return imageUrl;
     } catch (e) {
@@ -98,16 +95,13 @@ class _ReportScreenState extends State<ReportScreen> {
       imageUrl = await _uploadImage();
     }
 
-    // สร้าง report document ใน subcollection
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userId)
-        .collection('reports')
-        .add({
+    // สร้าง report document ใน reports collection
+    await FirebaseFirestore.instance.collection('reports').add({
       'reporterId': currentUser.uid,
+      'reportToId': widget.reportToId,
       'reportType': selectedType,
       'reportDesc': _detailsController.text,
-      'imageUrl': imageUrl, // เพิ่ม URL รูปภาพ (null ถ้าไม่มีรูป)
+      'imageUrl': imageUrl,
       'createdAt': FieldValue.serverTimestamp(),
       'status': 'pending',
     });
