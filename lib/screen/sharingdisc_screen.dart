@@ -21,13 +21,15 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
   String? selectedCategory;
   int? selectedPaymentType;
 
-  Query<Map<String, dynamic>> buildQuery() {
+  Future<List<Map<String, dynamic>>> getGroupsWithUserStatus() async {
     DateTime now = DateTime.now();
     Timestamp currentTimestamp = Timestamp.fromDate(now);
+
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('groups')
         .where('groupStatus', whereNotIn: [2, 3, 4])
         .where('groupGenre', isEqualTo: 2)
+        .where('setTime', isGreaterThanOrEqualTo: currentTimestamp)
         .orderBy('setTime');
 
     if (selectedCategory != null) {
@@ -38,7 +40,43 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
       query = query.where('groupType', isEqualTo: selectedPaymentType);
     }
 
-    return query;
+    QuerySnapshot groupSnapshot = await query.get();
+    List<Map<String, dynamic>> groups = [];
+
+    for (var doc in groupSnapshot.docs) {
+      Map<String, dynamic> groupData = doc.data() as Map<String, dynamic>;
+      String creatorId = groupData['userId'];
+
+      groupData['id'] = doc.id;
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(creatorId)
+          .get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        groupData['creatorStatus'] = userData['status'];
+      } else {
+        groupData['creatorStatus'] = '1';
+      }
+
+      groups.add(groupData);
+    }
+
+    groups.sort((a, b) {
+      if (a['creatorStatus'] == '2' && b['creatorStatus'] != '2') {
+        return -1;
+      } else if (a['creatorStatus'] != '2' && b['creatorStatus'] == '2') {
+        return 1;
+      } else {
+        Timestamp timeA = a['setTime'];
+        Timestamp timeB = b['setTime'];
+        return timeA.compareTo(timeB);
+      }
+    });
+
+    return groups;
   }
 
   Future<String?> _getUserProfileImage(String userId) async {
@@ -193,9 +231,10 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
         children: [
           buildFilterDropdowns(),
           Expanded(
-            child: StreamBuilder(
-              stream: buildQuery().snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: getGroupsWithUserStatus(),
+              builder: (context,
+                  AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
                 if (snapshot.hasError) {
                   print('Error: ${snapshot.error}'); // เพิ่ม debug
                   return Center(
@@ -205,7 +244,7 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
                   return Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -221,12 +260,11 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
 
                 return ListView(
                   padding: const EdgeInsets.all(8.0),
-                  children: snapshot.data!.docs.map((doc) {
-                    var data = doc.data() as Map<String, dynamic>;
+                  children: snapshot.data!.map((data) {
                     return FutureBuilder<List<dynamic>>(
                       future: Future.wait([
                         _getUserProfileImage(data['userId']),
-                        _getUserListCount(doc.id),
+                        _getUserListCount(data['id']),
                       ]),
                       builder: (context,
                           AsyncSnapshot<List<dynamic>> combinedSnapshot) {
@@ -241,7 +279,7 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
                         return buildGroupCard(
                           context,
                           data,
-                          doc.id,
+                          data['id'],
                           profileImageUrl,
                           memberCount,
                         );
@@ -310,8 +348,17 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
                           as ImageProvider,
                   radius: 20,
                 ),
-                title: Text(username,
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                title: Row(
+                  children: [
+                    Text(username,
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    if (data['creatorStatus'] == '2')
+                      Icon(
+                        Icons.diamond,
+                        color: Colors.purple,
+                      ),
+                  ],
+                ),
                 subtitle: CountdownTimer(setTime: data['setTime'])),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -600,12 +647,22 @@ class _SharingDiscScreenState extends State<SharingDiscScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          data['username'] ?? 'Unknown User',
-                                          style: GoogleFonts.anuphan(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              data['username'] ??
+                                                  'Unknown User',
+                                              style: GoogleFonts.anuphan(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            if (data['creatorStatus'] == '2')
+                                              Icon(
+                                                Icons.diamond,
+                                                color: Colors.purple,
+                                              ),
+                                          ],
                                         ),
                                         SizedBox(height: 4),
                                         CountdownTimer(

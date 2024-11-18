@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:projectapp/constant.dart';
 import 'package:projectapp/model/groupchat.dart';
 import 'package:projectapp/screen/chatgroup.dart';
-import 'package:projectapp/screen/countdown.dart';
 import 'package:projectapp/screen/createpost.dart';
 import 'package:projectapp/screen/profile.dart';
 
@@ -21,13 +21,15 @@ class _SharingScreenState extends State<SharingScreen> {
   String? selectedCategory;
   int? selectedPaymentType;
 
-  Query<Map<String, dynamic>> buildQuery() {
+  Future<List<Map<String, dynamic>>> getGroupsWithUserStatus() async {
     DateTime now = DateTime.now();
     Timestamp currentTimestamp = Timestamp.fromDate(now);
+
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('groups')
         .where('groupStatus', whereNotIn: [2, 3, 4])
         .where('groupGenre', isEqualTo: 1)
+        .where('setTime', isGreaterThanOrEqualTo: currentTimestamp)
         .orderBy('setTime');
 
     if (selectedCategory != null) {
@@ -38,7 +40,44 @@ class _SharingScreenState extends State<SharingScreen> {
       query = query.where('groupType', isEqualTo: selectedPaymentType);
     }
 
-    return query;
+    QuerySnapshot groupSnapshot = await query.get();
+    List<Map<String, dynamic>> groups = [];
+
+    for (var doc in groupSnapshot.docs) {
+      Map<String, dynamic> groupData = doc.data() as Map<String, dynamic>;
+      String creatorId = groupData['userId'];
+
+      // เพิ่ม document ID เข้าไปในข้อมูล
+      groupData['id'] = doc.id;
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(creatorId)
+          .get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        groupData['creatorStatus'] = userData['status'];
+      } else {
+        groupData['creatorStatus'] = '1';
+      }
+
+      groups.add(groupData);
+    }
+
+    groups.sort((a, b) {
+      if (a['creatorStatus'] == '2' && b['creatorStatus'] != '2') {
+        return -1;
+      } else if (a['creatorStatus'] != '2' && b['creatorStatus'] == '2') {
+        return 1;
+      } else {
+        Timestamp timeA = a['setTime'];
+        Timestamp timeB = b['setTime'];
+        return timeA.compareTo(timeB);
+      }
+    });
+
+    return groups;
   }
 
   Future<String?> _getUserProfileImage(String userId) async {
@@ -193,11 +232,12 @@ class _SharingScreenState extends State<SharingScreen> {
         children: [
           buildFilterDropdowns(),
           Expanded(
-            child: StreamBuilder(
-              stream: buildQuery().snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: getGroupsWithUserStatus(),
+              builder: (context,
+                  AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
                 if (snapshot.hasError) {
-                  print('Error: ${snapshot.error}'); // เพิ่ม debug
+                  print('Error: ${snapshot.error}');
                   return Center(
                       child: Text('เกิดข้อผิดพลาด: ${snapshot.error}'));
                 }
@@ -205,7 +245,7 @@ class _SharingScreenState extends State<SharingScreen> {
                   return Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -218,15 +258,13 @@ class _SharingScreenState extends State<SharingScreen> {
                     ),
                   );
                 }
-
                 return ListView(
                   padding: const EdgeInsets.all(16.0),
-                  children: snapshot.data!.docs.map((doc) {
-                    var data = doc.data() as Map<String, dynamic>;
+                  children: snapshot.data!.map((data) {
                     return FutureBuilder<List<dynamic>>(
                       future: Future.wait([
                         _getUserProfileImage(data['userId']),
-                        _getUserListCount(doc.id),
+                        _getUserListCount(data['id']),
                       ]),
                       builder: (context,
                           AsyncSnapshot<List<dynamic>> combinedSnapshot) {
@@ -241,7 +279,7 @@ class _SharingScreenState extends State<SharingScreen> {
                         return buildGroupCard(
                           context,
                           data,
-                          doc.id,
+                          data['id'],
                           profileImageUrl,
                           memberCount,
                         );
@@ -267,7 +305,6 @@ class _SharingScreenState extends State<SharingScreen> {
     String groupName = data['groupName'] ?? 'ชื่อกลุ่ม';
     String groupImage = data['groupImage'] ?? '';
     int groupSize = data['groupSize'] ?? 2;
-    String groupDesc = data['groupDesc'] ?? 'ไม่มีคำอธิบาย';
     String username = data['username'] ?? 'Unknown User';
     double latitude = data['latitude'] ?? 0.0;
     double longitude = data['longitude'] ?? 0.0;
@@ -316,8 +353,20 @@ class _SharingScreenState extends State<SharingScreen> {
               ),
               title: GestureDetector(
                   onTap: () => _navigateToProfileScreen(data['userId']),
-                  child: Text(username,
-                      style: TextStyle(fontWeight: FontWeight.bold))),
+                  child: Row(
+                    children: [
+                      Text(username,
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(
+                        width: 4,
+                      ),
+                      if (data['creatorStatus'] == '2')
+                        Icon(
+                          Icons.diamond,
+                          color: Colors.purple,
+                        ),
+                    ],
+                  )),
               subtitle: Text(formattedDateTime),
             ),
             Padding(
@@ -489,8 +538,88 @@ class _SharingScreenState extends State<SharingScreen> {
     );
   }
 
-  void _showLocationDialog(
-      BuildContext context, double latitude, double longitude) {
+  Future<bool> _checkLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // ตรวจสอบว่า location services เปิดอยู่หรือไม่
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // แสดง dialog แจ้งเตือนให้เปิด location service
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(
+              'Location Service ปิดอยู่',
+              style: GoogleFonts.anuphan(),
+            ),
+            content: Text(
+              'กรุณาเปิด Location Service เพื่อใช้งานแผนที่',
+              style: GoogleFonts.anuphan(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'ตกลง',
+                  style: GoogleFonts.anuphan(),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+      return false;
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(
+                'Permission ถูกปฏิเสธ',
+                style: GoogleFonts.anuphan(),
+              ),
+              content: Text(
+                'ไม่สามารถเข้าถึงตำแหน่งของคุณได้',
+                style: GoogleFonts.anuphan(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'ตกลง',
+                    style: GoogleFonts.anuphan(),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  Future<void> _showLocationDialog(
+      BuildContext context, double latitude, double longitude) async {
+    // เช็ค permission ก่อน
+    bool hasPermission = await _checkLocationPermission();
+    if (!hasPermission) {
+      return; // ถ้าไม่ได้รับ permission ให้ return ออกไป
+    }
+
+    // ถ้าได้รับ permission แล้วค่อยแสดง dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -515,6 +644,10 @@ class _SharingScreenState extends State<SharingScreen> {
                       BitmapDescriptor.hueRed),
                 ),
               },
+              myLocationEnabled: true,
+              myLocationButtonEnabled: true,
+              zoomControlsEnabled: true,
+              mapToolbarEnabled: true,
             ),
           ),
           actions: [
@@ -664,12 +797,25 @@ class _SharingScreenState extends State<SharingScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          data['username'] ?? 'Unknown User',
-                                          style: GoogleFonts.anuphan(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              data['username'] ??
+                                                  'Unknown User',
+                                              style: GoogleFonts.anuphan(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 4,
+                                            ),
+                                            if (data['creatorStatus'] == '2')
+                                              Icon(
+                                                Icons.diamond,
+                                                color: Colors.purple,
+                                              ),
+                                          ],
                                         ),
                                         SizedBox(height: 4),
                                         Icon(Icons.calendar_month),

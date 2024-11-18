@@ -26,6 +26,29 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   int _groupType = 1;
   DateTime? _selectedDateTime;
   String _selectedCategory = GroupChat.categories[0];
+  String _userStatus = "1"; // Default status
+  int _maxGroupSize = 4; // Default max group size
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserStatus();
+  }
+
+  Future<void> _loadUserStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      setState(() {
+        _userStatus = userDoc.data()?['status'] ?? "1";
+        _maxGroupSize = _userStatus == "2" ? 10 : 4;
+      });
+    }
+  }
 
   Future<void> _pickLocation() async {
     final location = await Navigator.push<LatLng>(
@@ -104,7 +127,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       groupSize: _groupSize,
       groupType: _groupType,
       groupDesc: _groupDesc.text,
-      setTime: _selectedDateTime!,
+      setTime: Timestamp.fromDate(_selectedDateTime!),
       latitude: _selectedLocation!.latitude,
       longitude: _selectedLocation!.longitude,
       userId: user.uid,
@@ -219,7 +242,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           prefixIcon: Icon(Icons.group),
                           border: OutlineInputBorder(),
                         ),
-                        items: List.generate(9, (i) => i + 2)
+                        items: List.generate(_maxGroupSize - 1, (i) => i + 2)
                             .map((size) => DropdownMenuItem(
                                   value: size,
                                   child: Text('$size คน'),

@@ -104,7 +104,7 @@ class _CreateDiscScreenState extends State<CreateDiscScreen> {
       groupSize: _groupSize,
       groupType: _groupType,
       groupDesc: _groupDesc.text,
-      setTime: _selectedDateTime!,
+      setTime: Timestamp.fromDate(_selectedDateTime!),
       latitude: _selectedLocation!.latitude,
       longitude: _selectedLocation!.longitude,
       userId: user.uid,

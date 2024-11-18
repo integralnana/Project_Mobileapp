@@ -263,7 +263,7 @@ class _NotiScreenState extends State<NotiScreen> with TickerProviderStateMixin {
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: ListTile(
                 title: Text(
-                  doc['groupName'],
+                  doc['groupName'] ?? '',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Column(
@@ -531,12 +531,12 @@ class _NotiScreenState extends State<NotiScreen> with TickerProviderStateMixin {
           controller: _tabController,
           tabs: const [
             Tab(
-              icon: Icon(Icons.group_add),
-              text: 'คำขอเข้าร่วม',
-            ),
-            Tab(
               icon: Icon(Icons.notifications),
               text: 'การแจ้งเตือน',
+            ),
+            Tab(
+              icon: Icon(Icons.group_add),
+              text: 'คำขอเข้าร่วม',
             ),
           ],
           indicatorColor: Colors.white,
@@ -547,8 +547,8 @@ class _NotiScreenState extends State<NotiScreen> with TickerProviderStateMixin {
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildJoinRequestsTab(),
           _buildNotificationsTab(),
+          _buildJoinRequestsTab(),
         ],
       ),
     );

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -69,6 +70,17 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
           .doc(widget.groupId)
           .update({'groupStatus': '1'});
 
+      var snapshot = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.groupId)
+          .collection('confirmations')
+          .get();
+
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    }
+    if (groupStatus == '3') {
       var snapshot = await FirebaseFirestore.instance
           .collection('groups')
           .doc(widget.groupId)
@@ -175,13 +187,10 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
   Future<void> _showReviewDialog(String userId) async {
     if (userId == widget.currentUserId) return;
 
-    // เปลี่ยนการตรวจสอบจาก subcollection เป็น collection reviews
     final reviewDoc = await FirebaseFirestore.instance
         .collection('reviews')
         .where('reviewerId', isEqualTo: widget.currentUserId)
-        .where('userId',
-            isEqualTo:
-                userId) // เพิ่ม userId เพื่อตรวจสอบว่าเคยรีวิวคนนี้หรือยัง
+        .where('userId', isEqualTo: userId)
         .where('groupId', isEqualTo: widget.groupId)
         .get();
 
@@ -354,13 +363,14 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
   Future<void> _kickMember(String userId) async {
     if (!isGroupLeader ||
         groupStatus == '3' ||
+        groupStatus == '4' ||
         userId == widget.currentUserId) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(!isGroupLeader
                 ? 'เฉพาะหัวหน้ากลุ่มเท่านั้นที่สามารถเตะสมาชิกออกได้'
-                : groupStatus == '3'
-                    ? 'ไม่สามารถเตะสมาชิกออกได้ในช่วงดำเนินการนัดรับ'
+                : groupStatus == '3' || groupStatus == '4'
+                    ? 'ไม่สามารถเตะสมาชิกออกได้ในสถานะนี้'
                     : 'คุณไม่สามารถเตะตัวเองออกจากกลุ่มได้')),
       );
       return;
@@ -589,10 +599,10 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
   }
 
   Future<void> _leaveGroup() async {
-    if (groupStatus == '3') {
+    if (groupStatus == '3' || groupStatus == '4') {
       _showAlert(
         'ไม่สามารถออกจากกลุ่มได้',
-        'ไม่สามารถออกจากกลุ่มในช่วงดำเนินการนัดรับได้',
+        'ไม่สามารถออกจากกลุ่มในสถานะนี้ได้',
       );
       return;
     }
@@ -790,10 +800,10 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
       return;
     }
 
-    if (groupStatus == '2') {
+    if (groupStatus == '2' || groupStatus == '3') {
       var confirmations = await groupRef.collection('confirmations').get();
       if (confirmations.size < members.size) {
-        _showSnackBar('ต้องรอให้สมาชิกทุกคนยืนยันการซื้อก่อน');
+        _showSnackBar('ต้องรอให้สมาชิกทุกคนยืนยันก่อน');
         return;
       }
     }
@@ -894,11 +904,56 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showLocationDialog(BuildContext context) {
+  Future<bool> _checkLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // ตรวจสอบว่า location services เปิดอยู่หรือไม่
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('กรุณาเปิดการใช้งาน Location Service')),
+      );
+      return false;
+    }
+
+    // ตรวจสอบและขอ permission
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ไม่สามารถเข้าถึงตำแหน่งของคุณได้')),
+        );
+        return false;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('กรุณาอนุญาตการเข้าถึงตำแหน่งในการตั้งค่า'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<void> _showLocationDialog(BuildContext context) async {
+    // เช็คว่ามีค่า latitude และ longitude หรือไม่
     if (latitude == null || longitude == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('ตำแหน่งไม่พร้อมใช้งาน')),
       );
+      return;
+    }
+
+    // เช็ค permission ก่อนแสดง dialog
+    bool hasPermission = await _checkLocationPermission();
+    if (!hasPermission) {
       return;
     }
 
@@ -907,7 +962,10 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('ตำแหน่งที่ปักหมุด'),
+        title: Text(
+          'ตำแหน่งที่ปักหมุด',
+          style: GoogleFonts.anuphan(),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           height: 300,
@@ -921,12 +979,19 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                     BitmapDescriptor.hueRed),
               ),
             },
+            myLocationEnabled: true, // เพิ่มการแสดงตำแหน่งปัจจุบัน
+            myLocationButtonEnabled: true, // เพิ่มปุ่มกลับไปยังตำแหน่งปัจจุบัน
+            zoomControlsEnabled: true, // เพิ่มปุ่มซูม
+            mapToolbarEnabled: true, // เพิ่มเครื่องมือแผนที่
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('ตกลง'),
+            child: Text(
+              'ตกลง',
+              style: GoogleFonts.anuphan(),
+            ),
           ),
         ],
       ),
@@ -986,6 +1051,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
           SizedBox(width: 8),
           if (isGroupLeader &&
               groupStatus != '3' &&
+              groupStatus != '4' &&
               userId != widget.currentUserId)
             IconButton(
               icon: Icon(Icons.delete),
@@ -1085,7 +1151,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                 },
               ),
             ),
-            if (groupStatus == '2')
+            if (groupStatus == '2' || groupStatus == '3')
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -1108,7 +1174,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                             padding: EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             child: Text(
-                                'ยืนยันการซื้อแล้ว: $confirmedCount/${groupSize ?? 0} คน',
+                                'ยืนยันแล้ว: $confirmedCount/${groupSize ?? 0} คน',
                                 style: GoogleFonts.anuphan(
                                     fontWeight: FontWeight.bold)),
                           ),
@@ -1124,8 +1190,7 @@ class _ChatGroupScreenState extends State<ChatGroupScreen> {
                           minimumSize: Size(100, 25),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child:
-                          Text('ยืนยันการซื้อ', style: GoogleFonts.anuphan()),
+                      child: Text('ยืนยัน', style: GoogleFonts.anuphan()),
                     ),
                   if (hasConfirmedPurchase)
                     ElevatedButton(

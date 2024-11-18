@@ -8,7 +8,7 @@ class GroupChat {
   String groupImage;
   int groupSize;
   int groupType;
-  DateTime setTime;
+  Timestamp setTime;
   double latitude;
   double longitude;
   String groupStatus;
@@ -76,16 +76,18 @@ class GroupChat {
   get userlist => null;
 
   String getThaiFormattedDate() {
-    String thaiDay = thaiDays[setTime.weekday % 7];
-    String thaiMonth = thaiMonths[setTime.month - 1];
-    int thaiYear = setTime.year + 543;
-    String time = DateFormat('HH:mm').format(setTime);
+    DateTime dateTime = setTime.toDate();
+    String thaiDay = thaiDays[dateTime.weekday % 7];
+    String thaiMonth = thaiMonths[dateTime.month - 1];
+    int thaiYear = dateTime.year + 543;
+    String time = DateFormat('HH:mm').format(dateTime);
 
-    return '$thaiDay ${setTime.day} $thaiMonth $thaiYear $time น.';
+    return '$thaiDay ${dateTime.day} $thaiMonth $thaiYear $time น.';
   }
 
   String getThaiFormattedTime() {
-    return DateFormat('HH:mm').format(setTime) + ' น.';
+    DateTime dateTime = setTime.toDate();
+    return DateFormat('HH:mm').format(dateTime) + ' น.';
   }
 
   Map<String, dynamic> toJson() {
@@ -96,7 +98,7 @@ class GroupChat {
       'groupImage': groupImage,
       'groupSize': groupSize,
       'groupType': groupType,
-      'setTime': setTime.toIso8601String(),
+      'setTime': setTime, // ส่ง Timestamp โดยตรง
       'latitude': latitude,
       'longitude': longitude,
       'groupStatus': groupStatus,
@@ -122,9 +124,7 @@ class GroupChat {
         groupGenre: json['groupGenre'] is String
             ? int.parse(json['groupGenre'])
             : json['groupType'] as int,
-        setTime: json['setTime'] is String
-            ? DateTime.parse(json['setTime'])
-            : (json['setTime'] as Timestamp).toDate(),
+        setTime: json['setTime'] as Timestamp, // แก้ไขให้รับ Timestamp โดยตรง
         latitude: (json['latitude'] as num).toDouble(),
         longitude: (json['longitude'] as num).toDouble(),
         userId: json['userId'].toString(),

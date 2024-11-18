@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:projectapp/constant.dart';
+import 'package:projectapp/screen/Vip.dart';
 import 'package:projectapp/screen/login.dart';
 import 'package:projectapp/screen/notification.dart';
 import 'package:projectapp/screen/profile.dart';
@@ -136,6 +137,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(
                       builder: (context) => ProfileScreen(
                           userId: FirebaseAuth.instance.currentUser!.uid)),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.diamond),
+              title: Text('VIP', style: GoogleFonts.anuphan()),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => VipSubScreen()),
                 );
               },
             ),

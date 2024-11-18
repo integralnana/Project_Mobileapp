@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // เพิ่ม import
 import 'package:google_fonts/google_fonts.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:projectapp/screen/home.dart';
@@ -32,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString('saved_email');
     final savedPassword = prefs.getString('saved_password');
-    
+
     if (savedEmail != null && savedPassword != null) {
       setState(() {
         _emailController.text = savedEmail;
@@ -88,6 +89,24 @@ class _LoginScreenState extends State<LoginScreen> {
     return user?.emailVerified ?? false;
   }
 
+  // เพิ่มฟังก์ชันตรวจสอบสถานะผู้ใช้
+  Future<bool> _checkUserStatus(String uid) async {
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      if (!userDoc.exists) {
+        return true; // ถ้าไม่มีข้อมูลให้เข้าสู่ระบบได้
+      }
+
+      final status = userDoc.data()?['status'];
+      return status != '0'; // คืนค่า true ถ้า status ไม่เท่ากับ '0'
+    } catch (e) {
+      print('Error checking user status: $e');
+      return false;
+    }
+  }
+
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -103,8 +122,18 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (credential.user != null) {
+        // ตรวจสอบสถานะผู้ใช้
+        final isActive = await _checkUserStatus(credential.user!.uid);
+        if (!isActive) {
+          await FirebaseAuth.instance.signOut();
+          setState(() {
+            _errorMessage = 'บัญชีผู้ใช้นี้ถูกระงับการใช้งาน';
+            _isLoading = false;
+          });
+          return;
+        }
+
         final isVerified = await _checkEmailVerification();
-        
         if (isVerified) {
           await _saveCredentials();
           Navigator.of(context).pushReplacement(
@@ -164,8 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
               },
             ),
             TextButton(
-              child: Text('ส่งอีเมลยืนยันอีกครั้ง', 
-                  style: GoogleFonts.anuphan()),
+              child:
+                  Text('ส่งอีเมลยืนยันอีกครั้ง', style: GoogleFonts.anuphan()),
               onPressed: () async {
                 try {
                   await FirebaseAuth.instance.currentUser
@@ -173,14 +202,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('ส่งอีเมลยืนยันแล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ',
+                      content: Text(
+                          'ส่งอีเมลยืนยันแล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ',
                           style: GoogleFonts.anuphan()),
                     ),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('เกิดข้อผิดพลาดในการส่งอีเมล กรุณาลองใหม่ภายหลัง',
+                      content: Text(
+                          'เกิดข้อผิดพลาดในการส่งอีเมล กรุณาลองใหม่ภายหลัง',
                           style: GoogleFonts.anuphan()),
                     ),
                   );
@@ -290,7 +321,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      validator: RequiredValidator(errorText: "กรุณากรอกรหัสผ่าน"),
+                      validator:
+                          RequiredValidator(errorText: "กรุณากรอกรหัสผ่าน"),
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _login(),

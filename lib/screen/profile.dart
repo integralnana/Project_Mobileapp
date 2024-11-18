@@ -24,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _point = 0;
   double _reviewRating = 0.0;
   int _selectedIndex = 0;
+  String _status = '';
 
   @override
   void initState() {
@@ -53,9 +54,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _point = userDoc['point'] ?? 0;
           _reviewRating =
               reviewsSnapshot.size > 0 ? _point / reviewsSnapshot.size : 0.0;
+          _status = userDoc['status'];
         });
       }
-      print(_point);
     } catch (e) {
       print('Error fetching user data: $e');
     }
@@ -131,12 +132,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _username,
-          style: GoogleFonts.anuphan(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Text(
+              _username,
+              style: GoogleFonts.anuphan(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(width: 4,),
+            if (_status == '2')
+              Icon(
+                Icons.diamond,
+                color: Colors.purple,
+              )
+          ],
         ),
         Text(
           '$_fname ${_lname.isNotEmpty ? _lname[0] + '.' : ''}',
@@ -225,16 +236,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(10),
                 color: AppTheme.cardColor),
             child: ListTile(
-              leading: CircleAvatar(
-                backgroundImage: NetworkImage(userSnapshot.data!['imageUrl']),
-                radius: 30,
+              leading: GestureDetector(
+                onTap: () =>
+                    _navigateToProfileScreen(userSnapshot.data!['userId']),
+                child: CircleAvatar(
+                  backgroundImage: NetworkImage(userSnapshot.data!['imageUrl']),
+                  radius: 30,
+                ),
               ),
               title: Row(
                 children: [
-                  Text(
-                    userSnapshot.data!['username'],
-                    style: GoogleFonts.anuphan(
-                      fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () =>
+                        _navigateToProfileScreen(userSnapshot.data!['userId']),
+                    child: Text(
+                      userSnapshot.data!['username'],
+                      style: GoogleFonts.anuphan(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -334,6 +353,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToProfileScreen(String userId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfileScreen(userId: userId),
       ),
     );
   }
